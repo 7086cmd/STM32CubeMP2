@@ -35,6 +35,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#ifdef ICACHE_DCACHE_USE
+#define ICACHE_DCACHE_ENABLE
+#endif /* ICACHE_DCACHE_ENABLE */
 #define I3C_IDX_FRAME_1         0U  /* Index of Frame 1 */
 #define I3C_IDX_FRAME_2         1U  /* Index of Frame 2 */
 /* USER CODE END PD */
@@ -45,7 +48,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-IPCC_HandleTypeDef   hipcc;
+IPCC_HandleTypeDef   hipcc1;
 I3C_HandleTypeDef hi3c4;
 DMA_HandleTypeDef handle_HPDMA3_Channel2;
 DMA_HandleTypeDef handle_HPDMA3_Channel1;
@@ -86,6 +89,12 @@ static void MX_DMA_Init(void);
 static void MX_I3C4_Init(void);
 static void MX_IPCC_Init(void);
 static void MX_I3C4_DeInit(void);
+#ifdef ICACHE_DCACHE_ENABLE
+static void MX_ICACHE_Init(void);
+static void MX_DCACHE_Init(void);
+static void MPU_Config(void);
+DCACHE_HandleTypeDef hdcache = {0};
+#endif /* ICACHE_DCACHE_ENABLE */
 void HAL_I3C_MspPostInit(I3C_HandleTypeDef* hi3c);
 /* USER CODE BEGIN PFP */
 static uint16_t Buffercmp(uint8_t *pBuffer1, uint8_t *pBuffer2, uint16_t BufferLength);
@@ -123,6 +132,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+#ifdef ICACHE_DCACHE_ENABLE
+  MPU_Config();
+  MX_DCACHE_Init();
+  MX_ICACHE_Init();
+#endif /* ICACHE_DCACHE_ENABLE */
 
   /* USER CODE END Init */
 
@@ -192,6 +206,12 @@ int main(void)
     Error_Handler();
   }
 
+#ifdef ICACHE_DCACHE_ENABLE
+  /* Flushing the cache before DMA transfer */
+  HAL_DCACHE_CleanByAddr(&hdcache, (uint32_t*)aControlBuffer, sizeof(aControlBuffer));
+  HAL_DCACHE_CleanByAddr(&hdcache, (uint32_t*)aTxBuffer, TXBUFFERSIZE);
+#endif /* ICACHE_DCACHE_ENABLE */
+
   /*##- Start the transmission process ###################################*/
   /* Transmit private data processus */
   if (HAL_I3C_Ctrl_Transmit_DMA(&hi3c4, &aContextBuffers[I3C_IDX_FRAME_1]) != HAL_OK)
@@ -240,6 +260,12 @@ int main(void)
     /* Error_Handler() function is called when error occurs. */
     Error_Handler();
   }
+
+#ifdef ICACHE_DCACHE_ENABLE
+  /* Invalidating cache lines after DMA transfer */
+  HAL_DCACHE_InvalidateByAddr(&hdcache, (uint32_t*)aControlBuffer, sizeof(aControlBuffer));
+  HAL_DCACHE_InvalidateByAddr(&hdcache, (uint32_t*)aRxBuffer, RXBUFFERSIZE);
+#endif /* ICACHE_DCACHE_ENABLE */
 
   /*##- Wait for the end of the transfer #################################*/
   /*  Before starting a new communication transfer, you need to check the current
@@ -649,8 +675,8 @@ static uint16_t Buffercmp(uint8_t *pBuffer1, uint8_t *pBuffer2, uint16_t BufferL
 static void MX_IPCC_Init(void)
 {
 
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
@@ -680,6 +706,114 @@ void CoproSync_ShutdownCb(IPCC_HandleTypeDef * hipcc, uint32_t ChannelIndex, IPC
   /* Wait for complete shutdown */
   while(1);
 }
+
+#ifdef ICACHE_DCACHE_ENABLE
+/**
+  * @brief Instruction Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ICACHE_Init(void)
+{
+
+  if(HAL_ICACHE_DeInit() != HAL_OK)
+  {
+    Error_Handler();
+  }
+  ICACHE_RegionConfigTypeDef pRegionConfig = {0};
+  pRegionConfig.TrafficRoute    = ICACHE_MASTER2_PORT;
+  pRegionConfig.OutputBurstType = ICACHE_OUTPUT_BURST_INCR;
+  pRegionConfig.Size            = ICACHE_REGIONSIZE_2MB;
+  pRegionConfig.BaseAddress     = 0x00000000;
+  pRegionConfig.RemapAddress    = 0x80000000;
+
+  if (HAL_ICACHE_EnableRemapRegion(ICACHE_REGION_0, &pRegionConfig) != HAL_OK)
+  {
+  	 Error_Handler();
+  }
+
+  if (HAL_ICACHE_Enable() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+}
+
+/**
+  * @brief Data Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DCACHE_Init(void)
+{
+
+  hdcache.Instance = DCACHE;
+  hdcache.Init.ReadBurstType = DCACHE_READ_BURST_WRAP;
+
+  if (HAL_DCACHE_Init(&hdcache) != HAL_OK)
+  {
+     Error_Handler();
+  }
+
+}
+
+/**
+  * @brief  Configure the MPU attributes
+  * @param  None
+  * @retval None
+  */
+static void MPU_Config(void)
+{
+
+   MPU_Region_InitTypeDef MPU_InitStruct;
+   MPU_Attributes_InitTypeDef MPU_Attributes_InitStruct ;
+
+   HAL_MPU_Disable();
+
+   /* write back, read and write allocate */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_WRITE_BACK | MPU_NON_TRANSIENT | MPU_RW_ALLOCATE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER0;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   /* ICACHE */
+   MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+   MPU_InitStruct.Number           = MPU_REGION_NUMBER0;
+   MPU_InitStruct.AttributesIndex  = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.BaseAddress      = 0x00000000;
+   MPU_InitStruct.LimitAddress     = 0x00010000;
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RO;
+   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
+   MPU_InitStruct.IsShareable      = MPU_ACCESS_NOT_SHAREABLE;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* DCACHE */
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x80A00000;
+   MPU_InitStruct.LimitAddress = 0x80DFFC00;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* Data section(IPC_SHMEM_1 & VIRTIO_SHMEM)- NON CACHEABLE */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER1;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER1;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x81200000;
+   MPU_InitStruct.LimitAddress = 0x812FFFFF;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+#endif /* ICACHE_DCACHE_ENABLE */
 
 /**
   * @brief  This function is executed in case of error occurrence.

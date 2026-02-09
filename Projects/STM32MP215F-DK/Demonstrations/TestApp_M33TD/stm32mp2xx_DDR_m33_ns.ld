@@ -40,18 +40,19 @@
  *
  * Memory regions (from extDT: m33td/tfm/stm32mp215f-dk-cm33tdcid-ostl-resmem.dtsi):
  *   tfm_code:        0x80000000, size 0x80000   (Secure code)
- *   cm33_cube_fw:    0x80080000, size 0x80000   (Non-secure code)
- *   tfm_data:        0x80100000, size 0x100000  (Secure data)
- *   cm33_cube_data:  0x80200000, size 0x800000  (Non-secure data)
+ *   cm33_cube_fw:    0x80080000, size 0x200000     (Non-secure code)
+ *   tfm_data:        0x80280000, size 0x100000     (Secure data)
+ *   cm33_cube_data:  0x80380000, size 0x680000     (Non-secure data)
  *
  */
 
-/* Macro definitions for linker script use */
+
+/* Macro definitions for linker script use (aligned with stm32mp215f-dk-cm33tdcid-ostl-resmem.dtsi) */
 NS_DDR_ALIAS_BASE   = 0x80000000;
-IMAGE_S_CODE_SIZE   = 0x80000;
-IMAGE_NS_CODE_SIZE  = 0x80000;
-IMAGE_S_DATA_SIZE   = 0x100000;
-IMAGE_NS_DATA_SIZE  = 0x800000;
+IMAGE_S_CODE_SIZE   = 0x80000;      /* tfm_code: 0x80000000, size 0x80000 */
+IMAGE_NS_CODE_SIZE  = 0x200000;     /* cm33_cube_fw: 0x80080000, size 0x200000 */
+IMAGE_S_DATA_SIZE   = 0x100000;     /* tfm_data: 0x80280000, size 0x100000 */
+IMAGE_NS_DATA_SIZE  = 0x680000;     /* cm33_cube_data: 0x80380000, size 0x680000 */
 BL2_TRAILER_SIZE    = 0x400;
 
 NS_CODE_START = NS_DDR_ALIAS_BASE + IMAGE_S_CODE_SIZE;
@@ -67,7 +68,29 @@ MEMORY
 {
     FLASH (rx) : ORIGIN = NS_CODE_START, LENGTH = NS_CODE_SIZE
     RAM   (rw) : ORIGIN = NS_DATA_START, LENGTH = NS_DATA_SIZE
+    VIRTIO_SHMEM  (rw)    : ORIGIN = 0x80aF8000,	LENGTH = 32K
+    RSC_TABLE_SHMEM(rw)   : ORIGIN = 0x80a07000,	LENGTH = 4K
+    IPC_SHMEM(rw)         : ORIGIN = 0x80a00000,	LENGTH = 8M - LENGTH(VIRTIO_SHMEM) - LENGTH(RSC_TABLE_SHMEM)
 }
+
+/* Highest address of the user mode stack */
+_estack             = ORIGIN(RAM) + LENGTH(RAM);    /* end of "RAM" Ram type memory */
+
+/* Symbols needed for OpenAMP to enable rpmsg */
+__OPENAMP_region_start__    = ORIGIN(VIRTIO_SHMEM);
+__OPENAMP_region_end__      = ORIGIN(VIRTIO_SHMEM) + LENGTH(VIRTIO_SHMEM);
+
+/* Symbols needed for OpenAMP to enable rpmsg */
+__RSC_TABLE_region_start__  = ORIGIN(RSC_TABLE_SHMEM);
+__RSC_TABLE_region_end__    = ORIGIN(RSC_TABLE_SHMEM) + LENGTH(RSC_TABLE_SHMEM);
+
+/* Symbols needed for MPU configuration */
+__MPU_CODE_region_start__ = ORIGIN(FLASH);
+__MPU_CODE_region_end__   = ORIGIN(FLASH) + LENGTH(FLASH);
+__MPU_DATA_region_start__ = ORIGIN(RAM);
+__MPU_DATA_region_end__   = ORIGIN(RAM) + LENGTH(RAM);
+__MPU_SHARED_NC_region_start__ = ORIGIN(IPC_SHMEM);
+__MPU_SHARED_NC_region_end__   = ORIGIN(VIRTIO_SHMEM) + LENGTH(VIRTIO_SHMEM);
 
 /* Library configurations */
 GROUP(libgcc.a libc.a libm.a libnosys.a)
@@ -186,10 +209,16 @@ SECTIONS
         *(SORT(.dtors.*))
         *(.dtors)
 
-        *(.rodata*)
 
         KEEP(*(.eh_frame*))
     } > FLASH
+    /* Constant data into "RAM" Ram type memory */
+    .rodata : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
+    {
+        *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+        *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+        . = ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT);
+    } >FLASH
 
     .ARM.extab : ALIGN(TFM_LINKER_DEFAULT_ALIGNMENT)
     {

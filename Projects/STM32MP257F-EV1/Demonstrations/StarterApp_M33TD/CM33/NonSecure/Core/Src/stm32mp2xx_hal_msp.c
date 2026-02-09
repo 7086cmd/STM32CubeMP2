@@ -84,6 +84,105 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef *htim)
 
 }
 
+#if defined(DISPLAY_PANEL_ENABLED)
+/**
+  * @brief  LVDS MSP Initialization
+  * @param  hlvds LVDS handle pointer
+  * @retval None
+  */
+void HAL_LVDS_MspInit(LVDS_HandleTypeDef* hlvds)
+{
+
+	GPIO_InitTypeDef GPIO_Init_Structure;
+
+	/* Enable GPIOs clock */
+	if(ResMgr_Request(RESMGR_RESOURCE_RIFSC, RESMGR_RCC_RESOURCE(96)) == RESMGR_STATUS_ACCESS_OK)
+	{
+		__HAL_RCC_GPIOG_CLK_ENABLE();
+	}
+
+	if(ResMgr_Request(RESMGR_RESOURCE_RIFSC, RESMGR_RCC_RESOURCE(98)) == RESMGR_STATUS_ACCESS_OK)
+	{
+		__HAL_RCC_GPIOI_CLK_ENABLE();
+	}
+
+
+	/* Requests access to GPIOG pin 15 and GPIOI pin 5 */
+
+	if(ResMgr_GPIO_Request(RESMGR_RESOURCE_RIF_GPIOG, GPIO_PIN_15) != RESMGR_STATUS_ACCESS_OK)
+	{
+	   Error_Handler();
+	}
+
+	if(ResMgr_GPIO_Request(RESMGR_RESOURCE_RIF_GPIOI, GPIO_PIN_5) != RESMGR_STATUS_ACCESS_OK)
+	{
+		Error_Handler();
+	}
+
+
+	/* Common GPIO configuration */
+	GPIO_Init_Structure.Mode      = GPIO_MODE_OUTPUT_PP;
+	GPIO_Init_Structure.Pull      = GPIO_NOPULL;
+	GPIO_Init_Structure.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+
+	/**
+	  *   GPIO configuration for LVDS Panel control signals
+	  *   - GPIOG Pin 15
+	  *   - GPIOI Pin 5
+	  */
+
+	GPIO_Init_Structure.Pin   = GPIO_PIN_15;
+	HAL_GPIO_Init(GPIOG, &GPIO_Init_Structure);
+	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_15, GPIO_PIN_SET);
+
+	GPIO_Init_Structure.Pin   = GPIO_PIN_5;
+	HAL_GPIO_Init(GPIOI, &GPIO_Init_Structure);
+	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_5, GPIO_PIN_SET);
+
+	/* minimum required delay of 30ms after panel reset*/
+	HAL_Delay(30);
+
+	/* Enable the LTDC Clock */
+	__HAL_RCC_LTDC_CLK_ENABLE();
+
+	/* Enable LTDC reset state */
+	__HAL_RCC_LTDC_FORCE_RESET();
+
+	/* Release LTDC from reset state */
+	__HAL_RCC_LTDC_RELEASE_RESET();
+
+	/* Enable the LVDS module */
+	__HAL_RCC_LVDS_CLK_ENABLE();
+
+	/* Reset LVDS */
+
+	__HAL_RCC_LVDS_FORCE_RESET();
+	__HAL_RCC_LVDS_RELEASE_RESET();
+
+    ResMgr_Release(RESMGR_RESOURCE_RIFSC, RESMGR_RCC_RESOURCE(96));
+	  ResMgr_Release(RESMGR_RESOURCE_RIFSC, RESMGR_RCC_RESOURCE(98));
+	  ResMgr_GPIO_Release(RESMGR_RESOURCE_RIF_GPIOG, GPIO_PIN_15);
+	  ResMgr_GPIO_Release(RESMGR_RESOURCE_RIF_GPIOI, GPIO_PIN_5);
+
+}
+
+/**
+  * @brief  LVDS MSP De-Initialization
+  * @param  hlvds LVDS handle pointer
+  * @retval None
+  */
+void HAL_LVDS_MspDeInit(LVDS_HandleTypeDef* hlvds)
+{
+
+	__HAL_RCC_LVDS_FORCE_RESET();
+	__HAL_RCC_LVDS_RELEASE_RESET();
+
+	__HAL_RCC_LTDC_FORCE_RESET();
+	__HAL_RCC_LTDC_RELEASE_RESET();
+}
+#endif
+
+
 /**
   * @brief  Initialize the PPP MSP.
   * @retval None

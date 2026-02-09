@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    stm32mp257f_eval_conf.h
   * @author  MCD Application Team
-  * @brief   STM32MP257F-EVAL board configuration file.
+  * @brief   STM32MP257F_EVAL board configuration file.
   ******************************************************************************
   * @attention
   *
@@ -67,3 +67,5 @@
 #endif
 
 #endif /* STM32MP257F_EVAL_CONF_H */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

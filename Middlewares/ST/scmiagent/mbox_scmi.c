@@ -25,7 +25,7 @@
 /* Private define ------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-extern IPCC_HandleTypeDef hipcc;
+extern IPCC_HandleTypeDef hipcc1;
 volatile static uint8_t   scmi_req_done = 0;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -41,17 +41,17 @@ static void MBOX_SCMI_IPCC_channel_callback( IPCC_HandleTypeDef    *hipcc       
 int MAILBOX_SCMI_Init(void)
 {
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX,
                                     MBOX_SCMI_IPCC_channel_callback) != HAL_OK)
   {
-    loc_printf("MBOX_SCMI_IPCC_CHANNEL-%d RX ActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
+    loc_printf("[ERROR] : MBOX_SCMI_IPCC_CHANNEL-%d RX ActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
     return -1;
   }
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX,
                                     MBOX_SCMI_IPCC_channel_callback) != HAL_OK)
   {
-    loc_printf("MBOX_SCMI_IPCC_CHANNEL-%d TX ActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
+    loc_printf("[ERROR] : MBOX_SCMI_IPCC_CHANNEL-%d TX ActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
     return -1;
   }
 
@@ -65,14 +65,14 @@ int MAILBOX_SCMI_Init(void)
   */
 void MAILBOX_SCMI_DeInit(void)
 {
-  if (HAL_IPCC_DeActivateNotification(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX) != HAL_OK)
+  if (HAL_IPCC_DeActivateNotification(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX) != HAL_OK)
   {
-    loc_printf("MBOX_SCMI_IPCC_CHANNEL-%d RX DeActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
+    loc_printf("[ERROR] : MBOX_SCMI_IPCC_CHANNEL-%d RX DeActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
   }
 
-  if (HAL_IPCC_DeActivateNotification(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX) != HAL_OK)
+  if (HAL_IPCC_DeActivateNotification(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX) != HAL_OK)
   {
-    loc_printf("MBOX_SCMI_IPCC_CHANNEL-%d TX DeActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
+    loc_printf("[ERROR] : MBOX_SCMI_IPCC_CHANNEL-%d TX DeActivateNotification fail\n\r", MBOX_SCMI_IPCC_CHANNEL);
   }
 }
 
@@ -89,7 +89,7 @@ int MAILBOX_SCMI_Req(void)
   uint32_t time = HAL_GetTick();
 
   /* Check that the channel is free (otherwise wait until it is) */
-  while (HAL_IPCC_GetChannelStatus(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX)
+  while (HAL_IPCC_GetChannelStatus(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX)
          != IPCC_CHANNEL_STATUS_FREE)
   {
     if ((HAL_GetTick() - time) >= MBOX_SCMI_IPCC_TIMEOUT_CHAN_FREE_MS)
@@ -101,7 +101,7 @@ int MAILBOX_SCMI_Req(void)
   }
 
   scmi_req_done = 0;
-  HAL_IPCC_NotifyCPU(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX);
+  HAL_IPCC_NotifyCPU(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_TX);
 
   /* Wait for response of above notification */
   time = HAL_GetTick();
@@ -116,9 +116,9 @@ int MAILBOX_SCMI_Req(void)
   /* Again Inform that acknowledgment has been received */
   do
   {
-    HAL_IPCC_NotifyCPU(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX);
+    HAL_IPCC_NotifyCPU(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX);
   }
-  while (HAL_IPCC_GetChannelStatus(&hipcc, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX) == IPCC_CHANNEL_STATUS_OCCUPIED);
+  while (HAL_IPCC_GetChannelStatus(&hipcc1, MBOX_SCMI_IPCC_CHANNEL, IPCC_CHANNEL_DIR_RX) == IPCC_CHANNEL_STATUS_OCCUPIED);
 
   return 0;
 }

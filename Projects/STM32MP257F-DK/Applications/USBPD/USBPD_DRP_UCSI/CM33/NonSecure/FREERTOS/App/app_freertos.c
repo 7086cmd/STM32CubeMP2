@@ -96,7 +96,10 @@ void MX_FREERTOS_DeInit(void)
   MX_USBPD_DeInit();
   MX_UCPD1_Deinit();
   MX_HPDMA3_Deinit();
-  MAILBOX_SCMI_DeInit();
+  if(!IS_DEVELOPER_BOOT_MODE())
+  {
+    MAILBOX_SCMI_DeInit();
+  }
   Thread_Led_Deinit();
   Thread_App_Deinit();
 

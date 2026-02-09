@@ -256,7 +256,7 @@
 /**
   * @}
   */
-
+#if 0
 /** @defgroup MX25L512_Exported_Types MX25L512 Exported Types
   * @{
   */    
@@ -436,7 +436,7 @@ int32_t MX25L512_ResetMemory(QSPI_HandleTypeDef *Ctx, MX25L512_Interface_t Mode)
 /**
   * @}
   */
-
+#endif
 #ifdef __cplusplus
 }
 #endif

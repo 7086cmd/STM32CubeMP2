@@ -141,7 +141,7 @@ static int OPENAMP_shmem_init(int RPMsgRole)
   return 0;
 }
 
-int MX_OPENAMP_Init(int RPMsgRole, rpmsg_ns_bind_cb ns_bind_cb)
+int MX_OPENAMP_Init(int RPMsgRole, rpmsg_ns_bind_cb ns_bind_cb, IPCC_HandleTypeDef * hipcc)
 {
   struct fw_rsc_vdev_vring *vring_rsc = NULL;
   struct virtio_device *vdev = NULL;
@@ -152,7 +152,7 @@ int MX_OPENAMP_Init(int RPMsgRole, rpmsg_ns_bind_cb ns_bind_cb)
 
   /* USER CODE END MAIL_BOX_Init */
 
-  MAILBOX_Init();
+  MAILBOX_Init(hipcc);
 
   /* Libmetal Initilalization */
   status = OPENAMP_shmem_init(RPMsgRole);
@@ -165,7 +165,7 @@ int MX_OPENAMP_Init(int RPMsgRole, rpmsg_ns_bind_cb ns_bind_cb)
 
   /* USER CODE END PRE_VIRTIO_INIT */
   vdev = rproc_virtio_create_vdev(RPMsgRole, VDEV_ID, &rsc_table->vdev,
-                                  rsc_io, NULL, MAILBOX_Notify, NULL);
+                                  rsc_io, hipcc, MAILBOX_Notify, NULL);
   if (vdev == NULL)
   {
     return -1;
@@ -248,13 +248,30 @@ int OPENAMP_create_endpoint(struct rpmsg_endpoint *ept, const char *name,
   return ret;
 }
 
+int OPENAMP_create_fixed_endpoint(struct rpmsg_endpoint *ept, const char *name,
+                                  uint32_t src, uint32_t dest, rpmsg_ept_cb cb,
+                                  rpmsg_ns_unbind_cb unbind_cb)
+{
+  int ret = 0;
+  /* USER CODE BEGIN PRE_EP_CREATE */
+
+  /* USER CODE END PRE_EP_CREATE */
+
+  ret = rpmsg_create_ept(ept, &rvdev.rdev, name, src, dest, cb, unbind_cb);
+
+  /* USER CODE BEGIN POST_EP_CREATE */
+
+  /* USER CODE END POST_EP_CREATE */
+  return ret;
+}
+
 void OPENAMP_check_for_message(void)
 {
   /* USER CODE BEGIN MSG_CHECK */
 
   /* USER CODE END MSG_CHECK */
-  MAILBOX_Poll(rvdev.vdev);
-}
+    MAILBOX_Poll(rvdev.vdev);
+  }
 
 void OPENAMP_Wait_EndPointready(struct rpmsg_endpoint *rp_ept)
 {

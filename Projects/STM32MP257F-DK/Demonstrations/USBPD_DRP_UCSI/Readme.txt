@@ -6,7 +6,7 @@ For compilation please do following:
 
 
 To build:
-- cmake -G"Unix Makefiles" -B build
+- cmake -G"Unix Makefiles" --fresh -B build
 - make -C build all
 
 Generate Signed Binary:

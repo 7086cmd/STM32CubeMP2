@@ -18,7 +18,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_fdcan.h"
-#include "app_freertos.h"
 
 #ifdef ENABLE_FDCAN_TEST  // Conditionally compile the FDCAN test code
 

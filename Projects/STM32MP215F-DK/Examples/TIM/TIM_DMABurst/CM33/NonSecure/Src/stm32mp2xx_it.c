@@ -57,7 +57,7 @@
 /* External variables --------------------------------------------------------*/
 /* USER CODE BEGIN EV */
 extern DMA_HandleTypeDef hdma_tim8_up;
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 /* USER CODE END EV */
 
 /* External variables --------------------------------------------------------*/
@@ -232,7 +232,7 @@ void HPDMA3_Channel1_IRQHandler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 /* USER CODE BEGIN 1 */

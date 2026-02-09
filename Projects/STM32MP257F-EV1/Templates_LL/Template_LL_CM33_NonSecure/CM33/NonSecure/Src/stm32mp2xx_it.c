@@ -60,7 +60,7 @@
 /* USER CODE END EV */
 
 /* External variables --------------------------------------------------------*/
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 
 /******************************************************************************/
 /*            Cortex Processor Interruption and Exception Handlers         */ 
@@ -213,7 +213,7 @@ void SysTick_Handler(void)
 
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 /* USER CODE BEGIN 1 */

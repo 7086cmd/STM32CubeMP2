@@ -15,55 +15,43 @@
 
 #define SCMI_CLOCK_NAME_LENGTH_MAX		16
 
-/*
- * struct scmi_clock - Private data of a clock driven through SCMI
- * @channel: Reference to the SCMI channel used to access the SCMI clock
- * @scmi_id: ID of the SCMI clock ID exposed on the SCMI channel
- * @name: Name of the clock as exposed by the SCMI server
- */
-struct scmi_clock {
-	struct scmi_channel *channel;
-	unsigned int clock_id;
-	char name[SCMI_CLOCK_NAME_LENGTH_MAX];
-};
 
 enum scmi_clock_message_id {
-	/*
-	 * Below message IDs were introduced in SMCI spec v1.0.
-	 * Requires SCMI procotol version 0x10000.
-	 */
-	SCMI_CLOCK_PROTO_VERSION = SCMI_PROTOCOL_VERSION,
-	SCMI_CLOCK_PROTO_ATTRIBS = SCMI_PROTOCOL_ATTRIBUTES,
-	SCMI_CLOCK_PROTO_MSG_ATTRIBS = SCMI_PROTOCOL_MESSAGE_ATTRIBUTES,
-	SCMI_CLOCK_ATTRIBUTES = 0x3,
-	SCMI_CLOCK_DESCRIBE_RATES = 0x4,
-	SCMI_CLOCK_RATE_SET = 0x5,
-	SCMI_CLOCK_RATE_GET = 0x6,
-	SCMI_CLOCK_CONFIG_SET = 0x7,
-	/*
-	 * Below message IDs were introduced in SMCI spec v3.1.
-	 * Requires SCMI procotol version 0x20000.
-	 */
-	SCMI_CLOCK_CONFIG_GET = 0x8,
-	SCMI_CLOCK_NAME_GET = 0x9,
-	SCMI_CLOCK_RATE_NOTIFY = 0xa,
-	SCMI_CLOCK_RATE_CHANGE_NOTIFY = 0xb,
-	/*
-	 * Below message IDs were introduced in SMCI spec v3.2.
-	 * Requires SCMI procotol version 0x20001.
-	 */
-	SCMI_CLOCK_POSSIBLE_PARENTS_GET = 0xc,
-	SCMI_CLOCK_PARENT_SET = 0xd,
-	SCMI_CLOCK_PARENT_GET = 0xe,
+  /*
+   * Below message IDs were introduced in SMCI spec v1.0.
+   * Requires SCMI procotol version 0x10000.
+   */
+  SCMI_CLOCK_PROTO_VERSION = SCMI_PROTOCOL_VERSION,
+  SCMI_CLOCK_PROTO_ATTRIBS = SCMI_PROTOCOL_ATTRIBUTES,
+  SCMI_CLOCK_PROTO_MSG_ATTRIBS = SCMI_PROTOCOL_MESSAGE_ATTRIBUTES,
+  SCMI_CLOCK_ATTRIBUTES = 0x3,
+  SCMI_CLOCK_DESCRIBE_RATES = 0x4,
+  SCMI_CLOCK_RATE_SET = 0x5,
+  SCMI_CLOCK_RATE_GET = 0x6,
+  SCMI_CLOCK_CONFIG_SET = 0x7,
+  /*
+   * Below message IDs were introduced in SMCI spec v3.1.
+   * Requires SCMI procotol version 0x20000.
+   */
+  SCMI_CLOCK_CONFIG_GET = 0x8,
+  SCMI_CLOCK_NAME_GET = 0x9,
+  SCMI_CLOCK_RATE_NOTIFY = 0xa,
+  SCMI_CLOCK_RATE_CHANGE_NOTIFY = 0xb,
+  /*
+   * Below message IDs were introduced in SMCI spec v3.2.
+   * Requires SCMI procotol version 0x20001.
+   */
+  SCMI_CLOCK_POSSIBLE_PARENTS_GET = 0xc,
+  SCMI_CLOCK_PARENT_SET = 0xd,
+  SCMI_CLOCK_PARENT_GET = 0xe,
 };
 
 /*
  * ABI for SCMI_PROTOCOL_VERSION message payload
  */
-
 struct scmi_clock_protocol_version_p2a {
-	int32_t status;
-	uint32_t version;
+  int32_t status;
+  uint32_t version;
 };
 
 /*
@@ -76,8 +64,8 @@ struct scmi_clock_protocol_version_p2a {
 	(((_attribs) >> 16) & 0xff)
 
 struct scmi_clock_protocol_attributes_p2a {
-	int32_t status;
-	uint32_t attributes;
+  int32_t status;
+  uint32_t attributes;
 };
 
 /*
@@ -116,16 +104,16 @@ struct scmi_protocol_message_attributes {
 /*
  * ABI for CLOCK_ATTRIBUTES message payload
  */
-#define SCMI_CLOCK_ATTRIBUTES(_enabled)		((_enabled) ? BIT(0) : 0)
+//#define SCMI_CLOCK_ATTRIBUTES(_enabled)		((_enabled) ? BIT(0) : 0)
 
 struct scmi_clock_attributes_a2p {
-    uint32_t clock_id;
+  uint32_t clock_id;
 };
 
 struct scmi_clock_attributes_p2a {
-    int32_t status;
-    uint32_t attributes;
-    char clock_name[SCMI_CLOCK_NAME_LENGTH_MAX];
+  int32_t status;
+  uint32_t attributes;
+  char clock_name[SCMI_CLOCK_NAME_LENGTH_MAX];
 };
 
 /*
@@ -146,13 +134,13 @@ struct scmi_clock_rate {
 };
 
 struct scmi_clock_rate_set_a2p {
-	uint32_t flags;
-	uint32_t clock_id;
-	struct scmi_clock_rate rate;
+  uint32_t flags;
+  uint32_t clock_id;
+  struct scmi_clock_rate rate;
 };
 
 struct scmi_clock_rate_set_p2a {
-	int32_t status;
+  int32_t status;
 };
 
 /*
@@ -160,12 +148,12 @@ struct scmi_clock_rate_set_p2a {
  */
 
 struct scmi_clock_rate_get_a2p {
-	uint32_t clock_id;
+  uint32_t clock_id;
 };
 
 struct scmi_clock_rate_get_p2a {
-	int32_t status;
-	struct scmi_clock_rate rate;
+  int32_t status;
+  struct scmi_clock_rate rate;
 };
 
 /*
@@ -178,12 +166,12 @@ struct scmi_clock_rate_get_p2a {
 	((_enable) << SCMI_CLOCK_CONFIG_SET_ENABLE_POS)
 
 struct scmi_clock_config_set_a2p {
-    uint32_t clock_id;
-    uint32_t attributes;
+  uint32_t clock_id;
+  uint32_t attributes;
 };
 
 struct scmi_clock_config_set_p2a {
-    int32_t status;
+  int32_t status;
 };
 
 /*
@@ -227,8 +215,8 @@ struct scmi_clock_config_set_p2a {
 	 0)
 
 struct scmi_clock_describe_rates_a2p {
-	uint32_t clock_id;
-	uint32_t rate_index;
+  uint32_t clock_id;
+  uint32_t rate_index;
 };
 
 struct scmi_clock_describe_rates_p2a {
@@ -242,15 +230,7 @@ struct scmi_clock_describe_rates_p2a {
  */
 
 struct scmi_clock_name_get_a2p {
-	uint32_t clock_id;
-};
-
-#define SCMI_CLOCK_EXTENDED_NAME_LENGTH_MAX 64
-
-struct scmi_clock_name_get_p2a {
-	int32_t status;
-	uint32_t flags;
-	char clock_name[SCMI_CLOCK_EXTENDED_NAME_LENGTH_MAX];
+  uint32_t clock_id;
 };
 
 /*
@@ -258,12 +238,12 @@ struct scmi_clock_name_get_p2a {
  */
 
 struct scmi_clock_rate_notify_a2p {
-    uint32_t clock_id;
-    uint32_t notify_enable;
+  uint32_t clock_id;
+  uint32_t notify_enable;
 };
 
 struct scmi_clock_rate_notify_p2a {
-    int32_t status;
+  int32_t status;
 };
 
 /*
@@ -271,12 +251,12 @@ struct scmi_clock_rate_notify_p2a {
  */
 
 struct scmi_clock_rate_change_request_notify_a2p {
-    uint32_t clock_id;
-    uint32_t notify_enable;
+  uint32_t clock_id;
+  uint32_t notify_enable;
 };
 
 struct scmi_clock_rate_change_request_notify_p2a {
-    int32_t status;
+  int32_t status;
 };
 
 /*
@@ -284,13 +264,13 @@ struct scmi_clock_rate_change_request_notify_p2a {
  */
 
 struct scmi_clock_duty_cycle_get_a2p {
-    uint32_t clock_id;
+  uint32_t clock_id;
 };
 
 struct scmi_clock_duty_cycle_get_p2a {
-    int32_t status;
-    uint32_t numerator;
-    uint32_t denominator;
+  int32_t status;
+  uint32_t numerator;
+  uint32_t denominator;
 };
 
 /*
@@ -298,72 +278,78 @@ struct scmi_clock_duty_cycle_get_p2a {
  */
 
 struct scmi_clock_round_rate_get_a2p {
-    uint32_t flags;
-    uint32_t clock_id;
-    uint32_t rate[2];
+  uint32_t flags;
+  uint32_t clock_id;
+  uint32_t rate[2];
 };
 
-struct scmi_clock_round_rate_get_p2a {
-    int32_t status;
-    uint32_t rate[2];
-};
 
 /*
  * Enabling and disabling a clock
  */
-static int scmi_clk_gate(struct scmi_channel *channel, unsigned int clock_id, int enable)
+int scmi_clock_gate(struct scmi_channel *channel, unsigned int clock_id, int enable)
 {
-	struct scmi_clock_config_set_p2a response = { };
-	struct scmi_clock_config_set_a2p message = {
-		.clock_id = clock_id,
-		.attributes = SCMI_CLOCK_CONFIG_SET_ENABLE(enable),
-	};
-	struct scmi_message_data a2p = {
-		.channel = channel,
-		.protocol_id = SCMI_PROTOCOL_ID_CLOCK,
-		.message_id = SCMI_CLOCK_CONFIG_SET,
-		.message = &message,
-		.message_size = sizeof(message),
-		.response = &response,
-		.response_size = sizeof(response),
-	};
-	int ret = 0;
+  struct scmi_clock_config_set_p2a response = { };
+  struct scmi_clock_config_set_a2p message = {
+    .clock_id = clock_id,
+    .attributes = SCMI_CLOCK_CONFIG_SET_ENABLE(enable),
+  };
+  struct scmi_message_data a2p = {
+    .channel = channel,
+    .protocol_id = SCMI_PROTOCOL_ID_CLOCK,
+    .message_id = SCMI_CLOCK_CONFIG_SET,
+    .message = &message,
+    .message_size = sizeof(message),
+    .response = &response,
+    .response_size = sizeof(response),
+  };
+  int ret = 0;
 
-	ret = scmi_process_message(&a2p);
-	if (ret)
-		return ret;
+  ret = scmi_process_message(&a2p);
+  if (ret)
+    return ret;
 
-	return scmi_status_to_ret(response.status);
+  return scmi_status_to_ret(response.status);
 }
 
-/* Function to register to clock framework */
-int scmi_clock_enable(struct scmi_clock *clock)
+int scmi_clock_get_attributes(struct scmi_channel *channel, unsigned int clock_id,
+                              char *name, int len, uint32_t *attributes)
 {
-	//struct scmi_clock *scmi_clock = clock->private;
-
-	return scmi_clk_gate(clock->channel, clock->clock_id, 1);
+  struct scmi_clock_attributes_p2a response = {};
+  struct scmi_clock_attributes_a2p message = {
+    .clock_id = clock_id,
+  };
+  struct scmi_message_data a2p = {
+    .channel = channel,
+    .protocol_id = SCMI_PROTOCOL_ID_CLOCK,
+    .message_id = SCMI_CLOCK_ATTRIBUTES,
+    .message = &message,
+    .message_size = sizeof(message),
+    .response = &response,
+    .response_size = sizeof(response),
+  };
+  int ret = 0;
+  ret = scmi_process_message(&a2p);
+  if (ret)
+    return ret;
+  memcpy(name, response.clock_name, len >= SCMI_CLOCK_NAME_LENGTH_MAX 
+         ? SCMI_CLOCK_NAME_LENGTH_MAX : len );
+  *attributes = response.attributes;
+  return scmi_status_to_ret(response.status);
 }
 
-/* Function to register to clock framework */
-int scmi_clock_disable(struct scmi_clock *clock)
-{
-	//struct scmi_clock *scmi_clock = clock->private;
+  
 
-	return scmi_clk_gate(clock->channel, clock->clock_id, 0);
-}
-
-#if 0
 /*
  * Get and set a clock rate
  */
 
 /* Function to register to clock framework */
-int scmi_clock_get_rate(struct scmi_clock *clock, unsigned int *rate_khz)
+int scmi_clock_get_rate(struct scmi_channel *channel, unsigned int clock_id, unsigned int *rate_khz)
 {
-	//struct scmi_clock *scmi_clock = clock->private;
-	struct scmi_clk_rate_get_p2a response = { };
-	struct scmi_clk_rate_get_a2p message = {
-		.clock_id = clock->clock_id,
+	struct scmi_clock_rate_get_p2a response = { };
+	struct scmi_clock_rate_get_a2p message = {
+		.clock_id = clock_id,
 	};
 	struct scmi_message_data a2p = {
 		.channel = channel,
@@ -385,29 +371,26 @@ int scmi_clock_get_rate(struct scmi_clock *clock, unsigned int *rate_khz)
 	if (ret)
 		return ret;
 
-	rate_hz = ((uint64_t)response.out.rate.msb << 32) | out.rate.lsb;
-	*rate_khz = rate_hz / 10;
+	rate_hz = ((uint64_t)response.rate.msb << 32) | response.rate.lsb;
+	*rate_khz = rate_hz / 1000;
 
 	return 0;
 }
 
 /* Function to register to clock framework */
-int scmi_clock_set_rate(struct clock *clock, unsigned int rate_khz)
+int scmi_clock_set_rate(struct scmi_channel *channel, unsigned int clock_id, unsigned int rate_khz)
 {
-	struct scmi_clock *scmi_clock = clock->private;
-	struct scmi_clk_rate_set_p2a response = { };
-	struct scmi_clk_rate_set_a2p message = {
-		.clock_id = scmi_clock->clock_id,
+	struct scmi_clock_rate_set_p2a response = { };
+	struct scmi_clock_rate_set_a2p message = {
+		.clock_id = clock_id,
 		/* Here we assume the request is synchronous (blocking) */
-		.flags = SCMI_CLOCK_RATE_SET_ASYNC(0) |
-			 SCMI_CLOCK_RATE_SET_NO_DELAYED_RESPONSE(0) |
-			 SCMI_CLK_RATE_ROUND_CLOSEST,
+		.flags = 0,
 
-		.rate.lsb = (uint32_t)(rate_khz * 1000);
-		.rate.msb = (uint32_t)(((uint64_t)rate_khz * 1000) >> 32);
+		.rate.lsb = (uint32_t)(rate_khz * 1000),
+		.rate.msb = (uint32_t)(((uint64_t)rate_khz * 1000) >> 32),
 
 	};
-	struct scmi_message_data message = {
+	struct scmi_message_data a2p = {
 		.channel = channel,
 		.protocol_id = SCMI_PROTOCOL_ID_CLOCK,
 		.message_id = SCMI_CLOCK_RATE_SET,
@@ -418,7 +401,7 @@ int scmi_clock_set_rate(struct clock *clock, unsigned int rate_khz)
 	};
 	int ret = 0;
 
-	ret = scmi_process_msg(&message);
+	ret = scmi_process_message(&a2p);
 	if (ret) {
 		return ret;
 	}
@@ -426,6 +409,19 @@ int scmi_clock_set_rate(struct clock *clock, unsigned int rate_khz)
 	return scmi_status_to_ret(response.status);
 }
 
+/* Function to register to clock framework */
+int scmi_clock_enable(struct scmi_channel *channel, unsigned int clock_id)
+{
+	return scmi_clock_gate(channel, clock_id, 1);
+}
+
+/* Function to de-register to clock framework */
+int scmi_clock_disable(struct scmi_channel *channel, unsigned int clock_id)
+{
+	return scmi_clock_gate(channel, clock_id, 0);
+}
+
+#if 0
 /*
  * Initialize a clock structure. Optional.
  * This function allows to check the target SCMI clock exists and has a name.
@@ -459,11 +455,6 @@ static int scmi_get_clock_count(struct scmi_channel *channel)
 err:
 	assert(ret < 0);
 	return ret;
-}
-
-char *scmi_get_clock_name(struct scmi_clock *scmi_clock)
-{
-	return "\0";
 }
 
 /* Function to possibly register to the clock framework */

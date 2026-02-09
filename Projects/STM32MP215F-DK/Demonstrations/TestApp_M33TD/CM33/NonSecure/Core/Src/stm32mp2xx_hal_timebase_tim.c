@@ -50,6 +50,7 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   /* Acquire TIM6 using Resource manager */
   if (RESMGR_STATUS_ACCESS_OK == ResMgr_Request(RESMGR_RESOURCE_RIFSC, RESMGR_RIFSC_TIM6_ID))
   {
+	  
     /* Compute TIM6 clock */
     uwTimclock = HAL_RCCEx_GetTimerCLKFreq(RCC_PERIPHCLK_TIM6);
     /* Compute the prescaler value to have TIM6 counter clock equal to 1MHz */

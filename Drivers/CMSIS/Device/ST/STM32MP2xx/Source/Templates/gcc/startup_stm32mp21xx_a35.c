@@ -66,10 +66,14 @@
 /*----------------------------------------------------------------------------
   Internal References
  *----------------------------------------------------------------------------*/
+#if !defined(AARCH_32_Enable)
 void EL3_EL1_Interface (void) __attribute__ ((naked, section("RESET")));
 void Vectors           (void) __attribute__ ((naked, section("RESET")));
 void Reset_Handler     (void) __attribute__ ((naked, section("RESET")));
-
+#else
+void Vectors           (void) __attribute__ ((naked, section("RESET")));
+void Reset_Handler     (void) __attribute__ ((naked, target("arm")));
+#endif
 
 /*----------------------------------------------------------------------------
   Exception / Interrupt Handler
@@ -459,6 +463,7 @@ void nCTIIRQ1_IRQHandler (void) __attribute__ ((weak, alias("Default_ITHandler")
 /*----------------------------------------------------------------------------
   EL3-EL1 Interface parameters
  *----------------------------------------------------------------------------*/
+#if !defined(AARCH_32_Enable)
 void EL3_EL1_Interface(void)
 {
   /* Fill EL3-EL1 interface following structure : */
@@ -500,7 +505,7 @@ void EL3_EL1_Interface(void)
   ".HWORD   0x0       \n"
   );
 }
-
+#endif
 /*----------------------------------------------------------------------------
   Exception / Interrupt Vector Table
  *----------------------------------------------------------------------------*/
@@ -969,6 +974,9 @@ void Reset_Handler(void) {
   "start_reset_handler:               \n");
 #endif /* defined(A35_STARTUP_IN_ARM_MODE) */
   __asm__ volatile(
+#if defined(AARCH_32_Enable)
+  ".code 32                           \n"
+#endif
   /* Mask interrupts */
   "CPSID  if                                       \n"
 

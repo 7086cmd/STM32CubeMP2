@@ -433,9 +433,11 @@ int32_t BSP_CAMERA_HwReset(uint32_t Instance)
   /* Camera sensor RESET sequence */
   GPIO_InitTypeDef  gpio_init_structure;
 
+#if defined(USE_DEVELOPMENT_MODE)
   /*** Configure the GPIOs ***/
   CAMERA_STBYN_GPIO_CLK_ENABLE();
   CAMERA_RST_GPIO_CLK_ENABLE();
+#endif /* defined(USE_DEVELOPMENT_MODE) */
 
   gpio_init_structure.Pin = CAMERA_STBYN_PIN;
   gpio_init_structure.Mode = GPIO_MODE_OUTPUT_PP;

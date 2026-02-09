@@ -24,9 +24,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32mp2xx_hal.h"
 #include "stm32mp257f_eval.h"
-#include "tfm_ns_interface.h"
-#include "tfm_platform_api.h"
-#include "tfm_ioctl_cpu_api.h"
+#include "cmsis_os2.h"
+#include "FreeRTOSConfig.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -36,7 +35,10 @@
 
 void Error_Handler(void);
 void SystemClock_Config(void);
-
+#if defined(DISPLAY_PANEL_ENABLED)
+void MX_LVDS_Init(void);
+void MX_LTDC_Init(LTDC_ColorTypeDef Color, uint32_t format);
+#endif
 #endif /* MAIN_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

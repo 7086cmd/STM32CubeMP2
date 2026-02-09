@@ -28,6 +28,9 @@
 /* Private variables ---------------------------------------------------------*/
 extern TIM_HandleTypeDef htim6;
 extern EXTI_HandleTypeDef hexti1;
+extern EXTI_HandleTypeDef hexti2;
+extern IPCC_HandleTypeDef hipcc;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -35,61 +38,6 @@ extern EXTI_HandleTypeDef hexti1;
 /*            Cortex-M33 Processor Exceptions Handlers                         */
 /******************************************************************************/
 
-/**
-  * @brief  This function handles NMI exception.
-  * @retval None
-  */
-void NMI_Handler(void)
-{
-}
-
-/**
-  * @brief  This function handles Hard Fault exception.
-  * @retval None
-  */
-void HardFault_Handler(void)
-{
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles Memory Manage exception.
-  * @retval None
-  */
-void MemManage_Handler(void)
-{
-  /* Go to infinite loop when Memory Manage exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles Bus Fault exception.
-  * @retval None
-  */
-void BusFault_Handler(void)
-{
-  /* Go to infinite loop when Bus Fault exception occurs */
-  while (1)
-  {
-  }
-}
-
-/**
-  * @brief  This function handles Usage Fault exception.
-  * @retval None
-  */
-void UsageFault_Handler(void)
-{
-  /* Go to infinite loop when Usage Fault exception occurs */
-  while (1)
-  {
-  }
-}
 
 /**
   * @brief  This function handles Debug Monitor exception.
@@ -135,5 +83,29 @@ void TIM6_IRQHandler(void)
   /* USER CODE END TIM6_IRQn 1 */
 }
 
+/**
+ * @brief  Interrupt handler for IPCC1 RX.
+ *
+ * This function handles the IPCC1 RX interrupt request. It calls the HAL
+ * IPCC RX interrupt handler to process the received message.
+ *
+ * @note   This function should be called automatically by the hardware
+ *         when an IPCC1 RX interrupt occurs.
+ */
+void IPCC1_RX_IRQHandler(void)
+{
+   HAL_IPCC_RX_IRQHandler(&hipcc);
+}
+
+
+/**
+ * @brief  This function handles external line 7 interrupt request.
+ * @param  None
+ * @retval None
+ */
+void EXTI2_7_IRQHandler(void)
+{
+ HAL_EXTI_IRQHandler(&hexti2);
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

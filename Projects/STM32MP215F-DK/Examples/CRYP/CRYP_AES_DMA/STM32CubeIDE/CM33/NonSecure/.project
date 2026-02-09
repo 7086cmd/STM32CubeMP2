@@ -107,6 +107,11 @@
 			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_cryp_ex.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_dcache.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dcache.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_dma.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dma.c</locationURI>
@@ -130,6 +135,11 @@
 			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_i2c.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_i2c.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_icache.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_icache.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_i2c_ex.c</name>

@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    stm32mp215f_disco_conf_template.h
+  * @file    stm32mp215f_disco_conf.h
   * @author  MCD Application Team
   * @brief   STM32MP215F_DK board configuration file.
   ******************************************************************************

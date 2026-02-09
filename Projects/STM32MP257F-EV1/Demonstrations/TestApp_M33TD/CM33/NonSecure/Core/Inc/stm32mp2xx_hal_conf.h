@@ -37,7 +37,7 @@
 #if defined (CORE_CA35)
   #define HAL_A35_WRAPPER_ENABLED
 #endif /* CORE_CA35 */
-   #define HAL_ADC_MODULE_ENABLED
+#define HAL_ADC_MODULE_ENABLED
 /* #define HAL_BSEC_MODULE_ENABLED */
 #define HAL_CORTEX_MODULE_ENABLED
 /* #define HAL_CRC_MODULE_ENABLED */
@@ -50,21 +50,19 @@
    #define HAL_DMA_MODULE_ENABLED
 /* #define HAL_DSI_MODULE_ENABLED */
 /* #define HAL_ETH_MODULE_ENABLED */
-   #define HAL_EXTI_MODULE_ENABLED
-   #define HAL_FDCAN_MODULE_ENABLED
-   #define HAL_GPIO_MODULE_ENABLED
+#define HAL_EXTI_MODULE_ENABLED
+#define HAL_FDCAN_MODULE_ENABLED
+#define HAL_GPIO_MODULE_ENABLED
 /* #define HAL_HASH_MODULE_ENABLED */
 /* #define HAL_HSEM_MODULE_ENABLED */
-   #define HAL_I2C_MODULE_ENABLED
+#define HAL_I2C_MODULE_ENABLED
 /* #define HAL_I2S_MODULE_ENABLED */
-   #define HAL_I3C_MODULE_ENABLED
+#define HAL_I3C_MODULE_ENABLED
 /* #define HAL_ICACHE_MODULE_ENABLED */
-/* #define HAL_IPCC_MODULE_ENABLED */
+ #define HAL_IPCC_MODULE_ENABLED
 /* #define HAL_IRDA_MODULE_ENABLED */
 /* #define HAL_IWDG_MODULE_ENABLED */
-   #define HAL_LPTIM_MODULE_ENABLED
-/* #define HAL_LTDC_MODULE_ENABLED */
-/* #define HAL_LVDS_MODULE_ENABLED */
+#define HAL_LPTIM_MODULE_ENABLED
 /* #define HAL_MDF_MODULE_ENABLED */
 /* #define HAL_MMC_MODULE_ENABLED */
 /* #define HAL_NAND_MODULE_ENABLED */
@@ -74,21 +72,22 @@
 /* #define HAL_PCD_MODULE_ENABLED */
 /* #define HAL_PKA_MODULE_ENABLED */
 /* #define HAL_PSSI_MODULE_ENABLED */
-   #define HAL_PWR_MODULE_ENABLED
+#define HAL_PWR_MODULE_ENABLED
 /* #define HAL_RAMCFG_MODULE_ENABLED */
-   #define HAL_RCC_MODULE_ENABLED
+#define HAL_RCC_MODULE_ENABLED
 /* #define HAL_RIF_MODULE_ENABLED */
 /* #define HAL_RNG_MODULE_ENABLED */
-/* #define HAL_RTC_MODULE_ENABLED */
+#define HAL_RTC_MODULE_ENABLED
+#define HAL_RTC_EX_MODULE_ENABLED
 /* #define HAL_SAI_MODULE_ENABLED */
 /* #define HAL_SD_MODULE_ENABLED */
 /* #define HAL_SMARTCARD_MODULE_ENABLED */
 /* #define HAL_SMBUS_MODULE_ENABLED */
 /* #define HAL_SPDIFRX_MODULE_ENABLED */
-   #define HAL_SPI_MODULE_ENABLED
+#define HAL_SPI_MODULE_ENABLED
 /* #define HAL_SRAM_MODULE_ENABLED */
-   #define HAL_TIM_MODULE_ENABLED
-   #define HAL_UART_MODULE_ENABLED
+#define HAL_TIM_MODULE_ENABLED
+#define HAL_UART_MODULE_ENABLED
 /* #define HAL_USART_MODULE_ENABLED */
 /* #define HAL_WWDG_MODULE_ENABLED */
 
@@ -188,10 +187,8 @@
 #define  TICK_INT_PRIORITY    (((uint32_t)1<<(GIC_PRIO_BITS-1)) - 1)  /*!< tick interrupt priority set by default */
                                                                       /*!< to GIC400 lowest (highest value) in secure mode */
 #else
-#define  TICK_INT_PRIORITY    (((uint32_t)1<<__NVIC_PRIO_BITS) - 1)   /*!< tick interrupt priority set by default */
-                                                                      /*!< to NVIC lowest (highest value)         */
-                                                                      /*  Warning: Must be set to higher priority for HAL_Delay() */
-                                                                      /*  and HAL_GetTick() usage under interrupt context         */
+/* Ensure HAL tick is not masked during RTOS critical sections (BASEPRI). */
+#define  TICK_INT_PRIORITY    ((uint32_t)1U)                          /*!< tick interrupt priority */
 #endif
 
 #define  USE_RTOS                     0U
@@ -386,6 +383,10 @@
 #ifdef HAL_RTC_MODULE_ENABLED
   #include "stm32mp2xx_hal_rtc.h"
 #endif /* HAL_RTC_MODULE_ENABLED */
+
+#ifdef HAL_RTC_EX_MODULE_ENABLED
+  #include "stm32mp2xx_hal_rtc_ex.h"
+#endif /* HAL_RTC_EX_MODULE_ENABLED */
 
 #ifdef HAL_SAI_MODULE_ENABLED
   #include "stm32mp2xx_hal_sai.h"

@@ -56,7 +56,7 @@
 
 /* External variables --------------------------------------------------------*/
 /* USER CODE BEGIN EV */
-extern IPCC_HandleTypeDef hipcc;
+extern IPCC_HandleTypeDef hipcc1;
 /* USER CODE END EV */
 
 /* External variables --------------------------------------------------------*/
@@ -217,7 +217,7 @@ void SysTick_Handler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 /* USER CODE BEGIN 1 */

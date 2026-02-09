@@ -42,7 +42,77 @@ Here is the list of references to user documents:
 # Update History
 
 ::: {.collapse}
-<input type="checkbox" id="collapse-section37" checked aria-hidden="true">
+<input type="checkbox" id="collapse-section39" checked aria-hidden="true">
+<label for="collapse-section39" aria-hidden="true">V5.3.1 / 25-Sep-2025</label>
+<div>
+
+## Main Changes
+
+  Headline
+  --------
+    SLA0044 Legal terms updated to latest revision (Rev 6 / October 2025)
+
+## Known limitations
+
+NA
+
+
+## Backward compatibility
+
+NA
+
+## Dependencies
+
+NA
+
+</div>
+:::
+
+::: {.collapse}
+<input type="checkbox" id="collapse-section38" aria-hidden="true">
+<label for="collapse-section38" aria-hidden="true">V5.3.0 / 17-Sep-2024</label>
+<div>
+
+## Main Changes
+
+### Maintenance Release
+
+
+## Contents
+**Fixed bugs list**
+
+  Headline
+  --------
+    Alignment with latest TRACER_EMB version (v1.12.0)
+	Update management of SRC_CAP message by SNK when in EPR mode
+	Increase PD2 tSenderResponse from 24 to 25ms (Ellisys failed TEST.PD.PROT.SRC.2)
+	Solve missing answer to GET_SNK_CAP_EXT when acting as SRC
+
+
+  
+## Known limitations
+
+## Development Toolchains and Compilers
+
+- IAR Embedded Workbench for ARM (EWARM) toolchain V8.50.6
+- Keil Microcontroller Development Kit (MDK-ARM) toolchain V5.31
+- STM32CubeIDE V1.11.0
+
+## Supported Devices and boards
+
+## Backward compatibility
+
+NA
+
+## Dependencies
+
+NA
+
+</div>
+:::
+
+::: {.collapse}
+<input type="checkbox" id="collapse-section37" aria-hidden="true">
 <label for="collapse-section37" aria-hidden="true">V5.2.0 / 22-May-2024</label>
 <div>
 

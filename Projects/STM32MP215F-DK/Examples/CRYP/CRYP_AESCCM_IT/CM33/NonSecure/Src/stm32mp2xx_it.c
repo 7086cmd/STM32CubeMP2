@@ -35,7 +35,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern CRYP_HandleTypeDef hcryp;
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 
 /******************************************************************************/
 /*            Cortex Processor Interruption and Exception Handlers         */ 
@@ -195,7 +195,7 @@ void CRYP2_IRQHandler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-  HAL_IPCC_RX_IRQHandler(&hipcc);
+  HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 /******************************************************************************/

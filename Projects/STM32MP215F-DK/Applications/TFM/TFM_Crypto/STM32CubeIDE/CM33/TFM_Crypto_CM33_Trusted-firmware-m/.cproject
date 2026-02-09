@@ -17,7 +17,7 @@
 				<src>.</src>
 				<build>config_default</build>
 				<generator>Unix Makefiles</generator>
-				<misc_command>-DTFM_PLATFORM=stm/stm32mp215f_dk -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake -DTFM_PROFILE=profile_medium -DCMAKE_BUILD_TYPE=debug -DDTS_EXT_DIR=../../../../../../../../../Firmware/Utilities/dt-stm32mp/stm32mp2/a35-td/tfm -DDTS_BOARD_NS=stm32mp215f-dk-ca35tdcid-ostl-ns.dts -DDTS_BOARD_S=stm32mp215f-dk-ca35tdcid-ostl-s.dts</misc_command>
+				<misc_command>-DTFM_PLATFORM=stm/stm32mp215f_dk -DTFM_TOOLCHAIN_FILE=toolchain_GNUARM.cmake -DTFM_PROFILE=profile_medium -DCMAKE_BUILD_TYPE=Relwithdebinfo -DSTM32_M33TDCID=OFF -DDTS_EXT_DIR=../../../../../../../../Utilities/dt-stm32mp/stm32mp2/a35-td/tfm -DDTS_BOARD_NS=stm32mp215f-dk-ca35tdcid-ostl-ns.dts -DDTS_BOARD_S=stm32mp215f-dk-ca35tdcid-ostl-s.dts</misc_command>
 				<cmake_build_type/>
 				<cmake_export_compile_commands/>
 				<cmake_toolchain_file/>

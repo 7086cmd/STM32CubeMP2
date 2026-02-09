@@ -8,7 +8,7 @@
   ********************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics. All rights reserved.
+  * Copyright (c) 2025 STMicroelectronics. All rights reserved.
   *
   * This software component is licensed by ST under BSD 3-Clause license,
   * the "License"; You may not use this file except in compliance with the
@@ -17,6 +17,20 @@
   *
   ******************************************************************************
   @endverbatim
+
+### V1.0.8/3-November-2025 ###
+================================
+   + openamp_template.c, openamp_template.h
+     - update MX_OPENAMP_Init API for multi IPCC instance support
+
+   + openamp_template.c, openamp_template.h
+     - fix hal include
+     - update MAILBOX_Init API for multi IPCC instance support
+
+### V1.0.7/3-November-2025 ###
+================================
+   + openamp_template.c, openamp_template.h
+     - Add OPENAMP_create_fixed_endpoint API
 
 ### V1.0.6/18-January-2022 ###
 ================================

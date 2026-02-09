@@ -25,7 +25,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32mp2xx_hal_conf.h"
+#include "stm32mp2xx_hal.h"
 
 /* COM usage define */
 #define USE_COM_LOG                         1U

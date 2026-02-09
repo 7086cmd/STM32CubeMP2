@@ -16,10 +16,12 @@
 		compatible = "u-boot,fwu-mdata-gpt";
 		fwu-mdata-store = <&sdmmc1>;
 	};
+
+	/delete-node/ typec;
 };
 
-&i2c_rpmsg {
-	/delete-node/ typec@35;
+&ltdc {
+	status = "disabled";
 };
 
 &usart2 {
@@ -42,6 +44,11 @@
 	status = "okay";
 };
 
+
+&m33_rproc {
+	status = "disabled";
+};
+
 &scmi {
 	compatible = "arm,scmi";
 	#address-cells = <1>;
@@ -52,3 +59,6 @@
 	/delete-property/ linaro,optee-channel-id;
 };
 
+&usbotg_hs {
+	/delete-node/ port;
+};

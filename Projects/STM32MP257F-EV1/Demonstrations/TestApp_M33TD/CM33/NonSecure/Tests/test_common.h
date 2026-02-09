@@ -24,6 +24,9 @@
 extern "C" {
 #endif
 
+#include "btn_monitor_task.h"
+#include "testapp_task.h"
+#include "main.h"
 /* Exported types ------------------------------------------------------------*/
 /**
   * @brief  Test status enumeration.

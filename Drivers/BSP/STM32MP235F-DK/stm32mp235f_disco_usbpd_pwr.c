@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    stm32mp235f_eval_usbpd_pwr.c
+  * @file    stm32mp235f_disco_usbpd_pwr.c
   * @author  MCD Application Team
   * @brief   This file provides a set of firmware functions to manage USB-PD Power
   *          available on STM32G4XX_NUCLEO board(MB1367) or STM32G0XX_NUCLEO board(MB1360) from STMicroelectronics :
@@ -143,7 +143,7 @@ typedef struct
 static void     MX_ADC_Init(void);
 static void     MX_ADC_DeInit(void);
 static void     PWR_TCPP0203_GPIOConfigInit(uint32_t PortNum);
-static void PWR_TCPP0203_GPIOConfigDeInit(uint32_t PortNum);
+static void     PWR_TCPP0203_GPIOConfigDeInit(uint32_t PortNum);
 static void     PWR_TCPP0203_ITConfigInit(uint32_t PortNum);
 static void     PWR_TCPP0203_ITConfigDeInit(uint32_t PortNum);
 static int32_t  PWR_TCPP0203_BUSConfigInit(uint32_t PortNum, uint16_t Address);
@@ -194,6 +194,7 @@ TCPP0203_Drv_t        *USBPD_PWR_PortCompDrv[USBPD_PWR_INSTANCES_NBR] = { NULL }
 /** @addtogroup STM32MP235F_DK_USBPD_PWR_Exported_Functions
   * @{
   */
+extern void Error_Handler(void);
 
 /**
   * @brief  Global initialization of PWR resource used by USB-PD
@@ -1660,110 +1661,200 @@ static void MX_ADC_DeInit(void)
 {
   if (hadc.Instance)
   {
-    HAL_ADC_Stop(&hadc);
-    HAL_ADC_DeInit(&hadc);
-    (void)ResMgr_Release(RESMGR_RESOURCE_RIFSC, RESMGR_RIFSC_ADC3_ID);
+    if (HAL_ADC_DeInit(&hadc) != HAL_OK)
+    {
+      printf("[ERROR] : MX_ADC_DeInit -> HAL_ADC_DeInit Failed\r\n");
+    }
+
+    if (ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(47)) != RESMGR_STATUS_ACCESS_OK)
+    {
+      int ret = 0;
+      printf("[LOG] : MX_ADC_DeInit -> Disable ck_flexgen_47 (ck_ker_adc3) via SCMI\r\n");
+      ret = scmi_clock_disable(&scmi_channel, CK_SCMI_FLEXGEN_47);
+      if (ret)
+      {
+        printf("[ERROR] : MX_ADC_DeInit -> Failed to disable CK_SCMI_FLEXGEN_47 (error code %d)\r\n", ret);
+        Error_Handler();
+      }
+      else
+      {
+        printf("[LOG] : MX_ADC_DeInit -> Successfully disabled CK_SCMI_FLEXGEN_47\r\n");
+      }
+    }
+
+    /* Disable ADC regulator */
+    if(ResMgr_Request(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0)) == RESMGR_STATUS_ACCESS_OK)
+    {
+      printf("[LOG] : MX_ADC_DeInit -> Disable ADC regulator directly\r\n");
+      HAL_PWREx_DisableSupply(PWR_PVM_A);
+    }
+    else
+    {
+      int ret = 0;
+      printf("[LOG] : MX_ADC_DeInit -> Disable ADC regulator via SCMI\r\n");
+      ret = scmi_voltage_domain_disable(&scmi_channel, VOLTD_SCMI_ADC);
+      if (ret)
+      {
+        printf("[ERROR] : MX_ADC_DeInit -> Failed to disable VOLTD_SCMI_ADC (error code %d)\r\n", ret);
+      }
+      else
+      {
+        printf("[LOG] : MX_ADC_DeInit -> Successfully disabled VOLTD_SCMI_ADC\r\n");
+      }
+    }
+
+    TCPP0203_PORT0_ADC_CLK_DISABLE();
+
+    /* Release ADC3 using Resource manager */
+    ResMgr_Release(RESMGR_RESOURCE_RIFSC, RESMGR_RIFSC_ADC3_ID);
+    ResMgr_Release(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0));
+    ResMgr_Release(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(47));
+    ResMgr_Release(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(95));
+    ResMgr_Release(TCPP0203_PORT0_VBUSCGPIO_RIF_RES_TYP_GPIO, TCPP0203_PORT0_VBUSC_GPIO_RIF_RES_NUM_GPIO);
   }
 }
 
 static void MX_ADC_Init(void)
 {
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
   /* USER CODE BEGIN ADC_Init 0 */
   if (ResMgr_Request(RESMGR_RESOURCE_RIFSC, RESMGR_RIFSC_ADC3_ID) != RESMGR_STATUS_ACCESS_OK)
   {
-    while (1) {};
+    printf("[ERROR] : MX_ADC_Init -> ResMgr_Request failed for RESMGR_RIFSC_ADC3_ID \r\n");
+    Error_Handler();
   }
+
   TCPP0203_PORT0_ADC_CLK_ENABLE();
 
-  /* Configuration of ADC VREF Power */
+  /* Enable ADC regulator */
   if (ResMgr_Request(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0)) == RESMGR_STATUS_ACCESS_OK)
   {
-    PWR->CR1 |= PWR_CR1_AVMEN;
-    OS_DELAY(1);
-    PWR->CR1 |= PWR_CR1_ASV;    /* Remove the VDDA18ADC power isolation */
-    OS_DELAY(1);
-    while ((PWR->CR1 & PWR_CR1_ARDY) == 0);  /* Wait for PWR ready */
+    printf("[LOG] : MX_ADC_Init -> Enable ADC regulator directly\r\n");
+    HAL_PWREx_EnableSupply(PWR_PVM_A);
   }
+  else
+  {
+    int ret = 0;
+    printf("[LOG] : MX_ADC_Init -> Enable ADC regulator via SCMI\r\n");
+    ret = scmi_voltage_domain_enable(&scmi_channel, VOLTD_SCMI_ADC);
+    if (ret)
+    {
+      printf("[ERROR] : MX_ADC_Init -> Failed to enable VOLTD_SCMI_ADC (error code %d)\r\n", ret);
+      Error_Handler();
+    }
+    else
+    {
+      printf("[LOG] : MX_ADC_Init -> Successfully enabled VOLTD_SCMI_ADC\r\n");
+    }
+  }
+
+  /* Reset ADC3 IP */
+  __HAL_RCC_ADC3_FORCE_RESET();
+  __HAL_RCC_ADC3_RELEASE_RESET();
+
   if (ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(47)) == RESMGR_STATUS_ACCESS_OK)
   {
+    printf("[LOG] : MX_ADC_Init -> Enabling ck_flexgen_47 (ck_ker_adc3) directly\r\n");
+
+    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
     /* Initializes the peripheral clock */
     PeriphClkInitStruct.XBAR_Channel = VSENSE_ADC_RCC_PERIPHCLK;
-    PeriphClkInitStruct.XBAR_ClkSrc = RCC_XBAR_CLKSRC_PLL4;
-    /* 1200MHz / 12 = 100MHz */
-    PeriphClkInitStruct.Div = 12;
+    PeriphClkInitStruct.XBAR_ClkSrc  = RCC_XBAR_CLKSRC_PLL4;
+    PeriphClkInitStruct.Div          = 12UL;  /* 1200MHz / 12 = 100MHz */
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
-      while (1) {};
+      printf("[ERROR] : MX_ADC_Init -> HAL_RCCEx_PeriphCLKConfig Failed\r\n");
+      Error_Handler();
+    }
+  }
+  else
+  {
+    int ret = 0;
+    printf("[LOG] : MX_ADC_Init -> Enable ck_flexgen_47 (ck_ker_adc3) via SCMI\r\n");
+    ret = scmi_clock_enable(&scmi_channel, CK_SCMI_FLEXGEN_47);
+    if (ret)
+    {
+      printf("[ERROR] : MX_ADC_Init -> Failed to enable CK_SCMI_FLEXGEN_47 (error code %d)\r\n", ret);
+      Error_Handler();
+    }
+    else
+    {
+      printf("[LOG] : MX_ADC_Init -> Successfully enabled CK_SCMI_FLEXGEN_47\r\n");
     }
   }
 
   /* Configure VBUS Connector sensing GPIO */
-  if (!TCPP0203_PORT0_VBUSC_GPIO_IS_CLK_ENABLE())
+  if (ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(95)) == RESMGR_STATUS_ACCESS_OK)
   {
-    if (ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(95)) == RESMGR_STATUS_ACCESS_OK)
+    if (!TCPP0203_PORT0_VBUSC_GPIO_IS_CLK_ENABLE())
     {
       TCPP0203_PORT0_VBUSC_GPIO_CLK_ENABLE();
     }
   }
+
   if (ResMgr_Request(TCPP0203_PORT0_VBUSCGPIO_RIF_RES_TYP_GPIO, TCPP0203_PORT0_VBUSC_GPIO_RIF_RES_NUM_GPIO) !=
       RESMGR_STATUS_ACCESS_OK)
   {
-    while (1) {};
+    Error_Handler();
   }
 
   LL_GPIO_SetPinMode(TCPP0203_PORT0_VBUSC_GPIO_PORT, TCPP0203_PORT0_VBUSC_GPIO_PIN, TCPP0203_PORT0_VBUSC_GPIO_MODE);
+  /* USER CODE END ADC_Init 0 */
 
-  /* USER CODE END ADC1_Init 0 */
+  /* USER CODE BEGIN ADC_Init 1 */
+  /* Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) */
+  hadc.Instance                       = VSENSE_ADC_INSTANCE;
+  hadc.Init.ClockPrescaler            = VSENSE_ADC_CLOCK_PRESCALER;
+  hadc.Init.Resolution                = ADC_RESOLUTION_12B;
+  hadc.Init.ScanConvMode              = ADC_SCAN_ENABLE;
+  hadc.Init.EOCSelection              = ADC_EOC_SINGLE_CONV;
+  hadc.Init.LowPowerAutoWait          = DISABLE;
+  hadc.Init.ContinuousConvMode        = ENABLE;
+  hadc.Init.NbrOfConversion           = 1;
+  hadc.Init.DiscontinuousConvMode     = DISABLE;
+  hadc.Init.ExternalTrigConv          = ADC_SOFTWARE_START;
+  hadc.Init.ExternalTrigConvEdge      = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc.Init.ConversionDataManagement  = ADC_CONVERSIONDATA_DR;
+  hadc.Init.Overrun                   = ADC_OVR_DATA_OVERWRITTEN;
+  hadc.Init.OversamplingMode          = DISABLE;
+  if (HAL_ADC_Init(&hadc) != HAL_OK)
+  {
+    printf("[ERROR] : MX_ADC_Init -> HAL_ADC_Init Failed\r\n");
+    Error_Handler();
+  }
 
   ADC_ChannelConfTypeDef sConfig = {0};
 
-  /* USER CODE BEGIN ADC_Init 1 */
-
-  /* USER CODE END ADC_Init 1 */
-  /* Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) */
-  hadc.Instance = VSENSE_ADC_INSTANCE;
-  hadc.Init.ClockPrescaler = VSENSE_ADC_CLOCK_PRESCALER;
-  hadc.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  hadc.Init.LowPowerAutoWait = DISABLE;
-  hadc.Init.ContinuousConvMode = ENABLE;
-  hadc.Init.NbrOfConversion = 1;
-  hadc.Init.DiscontinuousConvMode = DISABLE;
-  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
-  hadc.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
-  hadc.Init.OversamplingMode = DISABLE;
-  if (HAL_ADC_Init(&hadc) != HAL_OK)
-  {
-  }
-
   /* Configure Regular Channel */
-  sConfig.Channel = VSENSE_ADC_CHANNEL;
-  sConfig.Rank = VSENSE_ADC_RANK;
-  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
-  sConfig.SingleDiff   = ADC_SINGLE_ENDED;            /* Single-ended input channel */
-  sConfig.OffsetNumber = ADC_OFFSET_NONE;             /* No offset subtraction */
-  sConfig.Offset = 0;                                 /* Parameter discarded because offset correction is disabled */
-  sConfig.OffsetRightShift = DISABLE;
-  sConfig.OffsetSignedSaturation = DISABLE;
-  sConfig.OffsetSaturation = DISABLE;
-  sConfig.OffsetSign = ADC_OFFSET_SIGN_POSITIVE;
-
+  sConfig.Channel                 = VSENSE_ADC_CHANNEL;
+  sConfig.Rank                    = VSENSE_ADC_RANK;
+  sConfig.SamplingTime            = ADC_SAMPLETIME_247CYCLES_5;
+  sConfig.SingleDiff              = ADC_SINGLE_ENDED;            /* Single-ended input channel */
+  sConfig.OffsetNumber            = ADC_OFFSET_NONE;             /* No offset subtraction */
+  sConfig.Offset                  = 0;                           /* Parameter discarded because offset correction is disabled */
+  sConfig.OffsetRightShift        = DISABLE;
+  sConfig.OffsetSignedSaturation  = DISABLE;
+  sConfig.OffsetSaturation        = DISABLE;
+  sConfig.OffsetSign              = ADC_OFFSET_SIGN_POSITIVE;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
+    printf("[ERROR] : MX_ADC_Init -> HAL_ADC_ConfigChannel Failed\r\n");
+    Error_Handler();
   }
+  /* USER CODE END ADC_Init 1 */
+
 
   /* USER CODE BEGIN ADC_Init 2 */
   if (HAL_ADCEx_Calibration_Start(&hadc, ADC_SINGLE_ENDED) != HAL_OK)
   {
+    printf("[ERROR] : MX_ADC_Init -> HAL_ADCEx_Calibration_Start Failed\r\n");
+    Error_Handler();
   }
 
   if (HAL_ADC_Start(&hadc) != HAL_OK)
   {
+    printf("[ERROR] : MX_ADC_Init -> HAL_ADC_Start Failed\r\n");
+    Error_Handler();
   }
   /* USER CODE END ADC_Init 2 */
 }

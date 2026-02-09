@@ -38,7 +38,7 @@ extern uint32_t __IPC_SHM_region_start__;  /* defined by linker script */
 extern uint32_t __IPC_SHM_region_length__;    /* defined by linker script */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-IPCC_HandleTypeDef hipcc;
+IPCC_HandleTypeDef hipcc1;
 static char *ipc_shm_addr;
 static uint8_t ipc_shm_size;
 /* Private macro -------------------------------------------------------------*/
@@ -121,7 +121,7 @@ int main(void)
       printf("(%ld) Send A35 wakeup request\n\r", count);
 
       /* Notify A35 */
-      HAL_IPCC_NotifyCPU(&hipcc, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_TX);
+      HAL_IPCC_NotifyCPU(&hipcc1, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_TX);
 
       printf("(%ld) A35 wakeup request done !\n\r", count);
     }
@@ -136,8 +136,8 @@ int main(void)
   */
 void MX_IPCC_Init(void)
 {
-  hipcc.Instance = IPCC2;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC2;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
@@ -145,7 +145,7 @@ void MX_IPCC_Init(void)
   HAL_NVIC_SetPriority(IPCC2_RX_IRQn, DEFAULT_IRQ_PRIO, 0);
   HAL_NVIC_EnableIRQ(IPCC2_RX_IRQn);
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX,
       IPCC_channel1_callback) != HAL_OK) {
     Error_Handler();
   }
@@ -156,14 +156,14 @@ void MX_IPCC_Init(void)
 
 void MX_IPCC_DeInit(void)
 {
-  if (HAL_IPCC_DeActivateNotification(&hipcc, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX) != HAL_OK) {
+  if (HAL_IPCC_DeActivateNotification(&hipcc1, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX) != HAL_OK) {
 	Error_Handler();
   }
   /* IPCC interrupt DeInit */
   HAL_NVIC_DisableIRQ(IPCC2_RX_IRQn);
 
-  hipcc.Instance = IPCC2;
-  if (HAL_IPCC_DeInit(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC2;
+  if (HAL_IPCC_DeInit(&hipcc1) != HAL_OK)
   {
     Error_Handler();
   }

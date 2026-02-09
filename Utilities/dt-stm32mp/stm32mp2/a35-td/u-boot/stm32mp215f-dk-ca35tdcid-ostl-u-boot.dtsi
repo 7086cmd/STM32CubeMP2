@@ -15,6 +15,15 @@
 		compatible = "u-boot,fwu-mdata-gpt";
 		fwu-mdata-store = <&sdmmc1>;
 	};
+
+	/delete-node/ typec;
+};
+
+/* pre-reloc probe = reserve video frame buffer in video_reserve() */
+&ltdc {
+	clocks = <&rcc CK_BUS_LTDC>, <&rcc CK_KER_LTDC>;
+	clock-names = "bus", "lcd";
+	bootph-all;
 };
 
 &usart2 {
@@ -29,4 +38,8 @@
 	pins2 {
 		bootph-all;
 	};
+};
+
+&usbotg_hs {
+	/delete-node/ port;
 };

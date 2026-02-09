@@ -1,8 +1,9 @@
 /**
   ******************************************************************************
-  * @file    app_tasks_config.h
+  * @file    app_tasks_config_template.h
   * @author  MCD Application Team
-  * @brief   This file contains FreeRTOS task configuration macros.
+  * @brief   TEMPLATE: FreeRTOS task configuration macros for all tasks.
+  *          Copy this file to your project as app_tasks_config.h and customize.
   ******************************************************************************
   * @attention
   *
@@ -19,20 +20,86 @@
 #ifndef APP_TASKS_CONFIG_H
 #define APP_TASKS_CONFIG_H
 
-#include "cmsis_os2.h"
-
-/* Exported constants --------------------------------------------------------*/
+/*------------------- Watchdog Monitor Task -------------------*/
 /**
-  * @brief  Stack size and priority configuration for RemoteProc Task.
+  * @brief  Stack size, priority, and enable switch for Watchdog Monitor Task.
   */
-#define REMOTEPROC_TASK_STACK_SIZE    1028 /**< Stack size for RemoteProc Task. */
-#define REMOTEPROC_TASK_PRIORITY      osPriorityNormal /**< Priority for RemoteProc Task. */
+#ifndef ENABLE_WDG_MONITOR_TASK
+#define ENABLE_WDG_MONITOR_TASK        1
+#endif
+#define WDG_MONITOR_TASK_STACK_SIZE    1024 /**< Stack size for Watchdog Monitor Task. */
+#define WDG_MONITOR_TASK_PRIORITY      osPriorityHigh /**< High priority for reliable watchdog ping. */
 
+/*------------------- RemoteProc Task -------------------*/
 /**
-  * @brief  Stack size and priority configuration for UserApp Task.
+  * @brief  Stack size, priority, and enable switch for RemoteProc Task.
   */
-#define USERAPP_TASK_STACK_SIZE       512 /**< Stack size for UserApp Task. */
-#define USERAPP_TASK_PRIORITY         osPriorityBelowNormal /**< Priority for UserApp Task. */
+#ifndef ENABLE_REMOTEPROC_TASK
+#define ENABLE_REMOTEPROC_TASK         1
+#endif
+#define REMOTEPROC_TASK_STACK_SIZE     1024 /**< Stack size for RemoteProc Task. */
+#define REMOTEPROC_TASK_PRIORITY       osPriorityNormal /**< Standard priority for remote CPU boot/init. */
+
+/*------------------- UserApp Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for UserApp Task.
+  */
+#ifndef ENABLE_USERAPP_TASK
+#define ENABLE_USERAPP_TASK            0
+#endif
+#define USERAPP_TASK_STACK_SIZE        512 /**< Stack size for UserApp Task. */
+#define USERAPP_TASK_PRIORITY          osPriorityBelowNormal /**< Lower priority for UserApp (non-critical). */
+
+/*------------------- Logger Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for Logger Task.
+  */
+#ifndef ENABLE_LOGGER_TASK
+#define ENABLE_LOGGER_TASK             1
+#endif
+#define LOGGER_TASK_STACK_SIZE         1024 /**< Stack size for Logger Task. */
+#define LOGGER_TASK_PRIORITY           osPriorityLow /**< Lowest priority for UART logging. */
+
+/*------------------- SCMI Manager Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for SCMI Manager Task.
+  */
+#ifndef ENABLE_SCMI_MGR_TASK
+#define ENABLE_SCMI_MGR_TASK           1
+#endif
+#define SCMI_MGR_TASK_STACK_SIZE       1024 /**< Stack size for SCMI Manager Task. */
+#define SCMI_MGR_TASK_PRIORITY         osPriorityNormal /**< Standard priority for IPCC/SCMI management. */
+
+/*------------------- Button Monitor Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for Button Monitor Task.
+  */
+#ifndef ENABLE_BTN_MONITOR_TASK
+#define ENABLE_BTN_MONITOR_TASK        0
+#endif
+#define BTN_MONITOR_TASK_STACK_SIZE    1024 /**< Stack size for Button Monitor Task. */
+#define BTN_MONITOR_TASK_PRIORITY      osPriorityNormal /**< Standard priority for button processing. */
+
+/*------------------- OpenAMP Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for OpenAMP Task.
+  */
+#ifndef ENABLE_OPENAMP_TASK
+#define ENABLE_OPENAMP_TASK            0
+#endif
+#define OPENAMP_TASK_STACK_SIZE        1024 /**< Stack size for OpenAMP Task. */
+#define OPENAMP_TASK_PRIORITY          osPriorityNormal /**< Standard priority for RPMsg/OpenAMP message processing. */
+
+/*------------------- Display Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for Display Task.
+  */
+#ifndef ENABLE_DISPLAY_TASK
+#define ENABLE_DISPLAY_TASK            0
+#endif
+#define DISPLAY_TASK_STACK_SIZE        1024 /**< Stack size for Display Task. */
+#define DISPLAY_TASK_PRIORITY          osPriorityNormal /**< Standard priority for display state machine. */
+
 
 #endif /* APP_TASKS_CONFIG_H */
 

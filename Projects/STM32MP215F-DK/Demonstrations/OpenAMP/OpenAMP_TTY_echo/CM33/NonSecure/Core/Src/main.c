@@ -27,7 +27,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 COM_InitTypeDef COM_Init;
-IPCC_HandleTypeDef hipcc;
+IPCC_HandleTypeDef hipcc1;
 
 /* USER CODE BEGIN PV */
 VIRT_UART_HandleTypeDef huart0;
@@ -178,8 +178,8 @@ int main(void)
 static void MX_IPCC_Init(void)
 {
 
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
     Error_Handler();
   }

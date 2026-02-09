@@ -63,6 +63,13 @@ TEST_STATUS Test_TIMER_Run(void);
   */
 TEST_STATUS Test_TIMER_DeInit(void);
 
+/**
+  * @brief  Timer test hook called from the application's HAL Period Elapsed callback.
+  * @param  htim: Pointer to TIM handle.
+  * @retval None
+  */
+void Test_TIMER_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+
 #ifdef __cplusplus
 }
 #endif

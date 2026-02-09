@@ -95,7 +95,7 @@ __Vectors:
   .long IWDG4_RST_IRQHandler        /* Independent Watchdog 4 Reset through EXTI */
   .long WWDG1_IRQHandler            /* Window Watchdog 1 Early Wakeup interrupt */
   .long 0
-  .long 0
+  .long RESERVED_9_IRQHandler       /* Software IRQ triggered in Secure Context */
   .long TAMP_IRQHandler              /* Tamper interrupt (include LSECSS interrupts) */
   .long RTC_IRQHandler               /* RTC global interrupt */
   .long TAMP_S_IRQHandler            /* Tamper secure interrupt (include LSECSS interrupts)*/
@@ -810,5 +810,6 @@ Default_Handler:
   def_irq_handler EXTI1_15_IRQHandler
   def_irq_handler IS2M_IRQHandler
   def_irq_handler DDRPERFM_IRQHandler
+  def_irq_handler RESERVED_9_IRQHandler
 
   .end

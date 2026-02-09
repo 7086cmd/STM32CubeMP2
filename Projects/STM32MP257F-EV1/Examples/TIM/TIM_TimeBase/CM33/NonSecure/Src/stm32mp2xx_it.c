@@ -23,7 +23,7 @@
 
 /* USER CODE BEGIN 0 */
 extern TIM_HandleTypeDef htim3;
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -183,7 +183,7 @@ void SysTick_Handler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 /**

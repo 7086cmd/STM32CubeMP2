@@ -59,12 +59,10 @@
 /* #define HAL_I2S_MODULE_ENABLED */
 /* #define HAL_I3C_MODULE_ENABLED */ /* Disabled because I3C HAL not available yet */
 /* #define HAL_ICACHE_MODULE_ENABLED */
-/* #define HAL_IPCC_MODULE_ENABLED */
+ #define HAL_IPCC_MODULE_ENABLED
 /* #define HAL_IRDA_MODULE_ENABLED */
 /* #define HAL_IWDG_MODULE_ENABLED */
 /* #define HAL_LPTIM_MODULE_ENABLED */
-/* #define HAL_LTDC_MODULE_ENABLED */
-/* #define HAL_LVDS_MODULE_ENABLED */
 /* #define HAL_MDF_MODULE_ENABLED */
 /* #define HAL_MMC_MODULE_ENABLED */
 /* #define HAL_NAND_MODULE_ENABLED */
@@ -79,7 +77,8 @@
 #define HAL_RCC_MODULE_ENABLED
 /* #define HAL_RIF_MODULE_ENABLED */
 /* #define HAL_RNG_MODULE_ENABLED */
-/* #define HAL_RTC_MODULE_ENABLED */
+#define HAL_RTC_MODULE_ENABLED
+#define HAL_RTC_EX_MODULE_ENABLED
 /* #define HAL_SAI_MODULE_ENABLED */
 /* #define HAL_SD_MODULE_ENABLED */
 /* #define HAL_SMARTCARD_MODULE_ENABLED */
@@ -188,10 +187,8 @@
 #define  TICK_INT_PRIORITY    (((uint32_t)1<<(GIC_PRIO_BITS-1)) - 1)  /*!< tick interrupt priority set by default */
                                                                       /*!< to GIC400 lowest (highest value) in secure mode */
 #else
-#define  TICK_INT_PRIORITY    (((uint32_t)1<<__NVIC_PRIO_BITS) - 1)   /*!< tick interrupt priority set by default */
-                                                                      /*!< to NVIC lowest (highest value)         */
-                                                                      /*  Warning: Must be set to higher priority for HAL_Delay() */
-                                                                      /*  and HAL_GetTick() usage under interrupt context         */
+/* Ensure HAL tick is not masked during RTOS critical sections (BASEPRI). */
+#define  TICK_INT_PRIORITY    ((uint32_t)1U)                          /*!< tick interrupt priority */
 #endif
 
 #define  USE_RTOS                     0U
@@ -386,6 +383,10 @@
 #ifdef HAL_RTC_MODULE_ENABLED
   #include "stm32mp2xx_hal_rtc.h"
 #endif /* HAL_RTC_MODULE_ENABLED */
+
+#ifdef HAL_RTC_EX_MODULE_ENABLED
+  #include "stm32mp2xx_hal_rtc_ex.h"
+#endif /* HAL_RTC_EX_MODULE_ENABLED */
 
 #ifdef HAL_SAI_MODULE_ENABLED
   #include "stm32mp2xx_hal_sai.h"

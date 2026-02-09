@@ -17,8 +17,8 @@
   */
 
 /* Includes ----------------------------------------------------------------------*/
-#include "stm32mp215f_disco.h" /* TODO */
-#include "stm32mp215f_disco_bus.h" /* TODO */
+#include "stm32mp215f_disco.h"
+#include "stm32mp215f_disco_bus.h"
 #include "stm32mp215f_disco_stpmic2l.h"
 #include <string.h>
 #include <stdio.h>
@@ -593,7 +593,6 @@ uint32_t BSP_PMIC_Power_Mode_Init()
   * @brief  BSP_PMIC_Set_Power_Mode Set PMIC power mode
   * @param  mode  mode to set
   * @retval status
-  * TODO: It needs modifications for Low Power Mode
   */
 uint32_t BSP_PMIC_Set_Power_Mode(__attribute__((unused))uint32_t mode)
 {

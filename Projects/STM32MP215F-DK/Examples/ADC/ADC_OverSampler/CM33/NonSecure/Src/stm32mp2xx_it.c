@@ -25,7 +25,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 extern TIM_HandleTypeDef    htim5;
 
 /* USER CODE BEGIN PV */
@@ -192,7 +192,7 @@ void SysTick_Handler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 

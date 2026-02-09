@@ -93,12 +93,12 @@ void ResMgr_LL_RCC_GPIOF_EnableClock(uint32_t resource)
       } else {
             /* RCC->GPIOFCFGR not already enabled */
             if(!READ_BIT(RCC->GPIOFCFGR, RCC_GPIOFCFGR_GPIOxEN)) {
-                  log_err("RCC GPIO F Clock get resource failed\n");
+                  log_err("[ERROR] : RCC GPIO F Clock get resource failed\n");
                   Error_Handler();
             }
       }
       if(ResMgr_Request(RESMGR_RESOURCE_RIF_GPIOF, RESMGR_GPIO_PIN(resource)) != RESMGR_STATUS_ACCESS_OK) {
-            log_err("Error allocating GPIO resource \r\n");
+            log_err("[ERROR] : Error allocating GPIO resource \r\n");
             Error_Handler();
       }
 }
@@ -110,7 +110,7 @@ void ResMgr_LL_RCC_GPIOG_EnableClock()
       } else {
           /* RCC->GPIOGCFGR not already enabled */
           if(!READ_BIT(RCC->GPIOGCFGR, RCC_GPIOGCFGR_GPIOxEN)) {
-            log_err("RCC GPIO G Clock get resource failed\n");
+            log_err("[ERROR] : RCC GPIO G Clock get resource failed\n");
             Error_Handler();
           }
       }
@@ -123,7 +123,7 @@ void ResMgr_LL_RCC_HPDMA3_EnableClock()
       } else {
           /* RCC->HPDMA3CFGR not already enabled */
           if(READ_BIT(RCC->HPDMA3CFGR, RCC_HPDMA3CFGR_HPDMA3EN) != RCC_HPDMA3CFGR_HPDMA3EN) {
-            log_err("RCC HPDMA3 Clock get resource failed\n");
+            log_err("[ERROR] : RCC HPDMA3 Clock get resource failed\n");
             Error_Handler();
           }
       }
@@ -131,7 +131,7 @@ void ResMgr_LL_RCC_HPDMA3_EnableClock()
 void ResMgr_LL_GPIO_Allocate_resource(uint32_t resource)
 {
       if(ResMgr_Request(RESMGR_RESOURCE_RIF_GPIOF, RESMGR_GPIO_PIN(resource)) != RESMGR_STATUS_ACCESS_OK) {
-            log_err("Error allocating GPIO resource \r\n");
+            log_err("[ERROR] : Error allocating GPIO resource \r\n");
             Error_Handler();
       }
 }
@@ -144,7 +144,7 @@ void  ResMgr_LL_RCC_Peripheral_Clock(uint32_t channel) {
             PeriphClkInitStruct.Div = 1;
             if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
             {
-                  log_err("Error allocating PeriphCLKConfig \r\n");
+                  log_err("[ERROR] : Error allocating PeriphCLKConfig \r\n");
                   Error_Handler();
             }
       }

@@ -1,0 +1,437 @@
+﻿# M33TD_NSAppCore (Common Stack)
+
+Reusable, board-agnostic CM33-NonSecure (FreeRTOS) application stack for STM32MP2 M33TDCID projects.
+
+In practice, projects like StarterApp / Template_StarterApp build a **Non‑Secure Application Manager** on top of this stack: the project provides board-specific drivers and configuration, then calls `NSCoreApp_Init()` as the bootstrap entry point.
+
+This stack provides the task-level building blocks needed to support the typical STM32MP2 M33TDCID boot and runtime flow: MCUboot brings up the platform and chains to Trusted Firmware-M (TF-M) on CM33-S, then the CM33-NS application starts and uses TF-M secure services. The Cortex-A35 remains available as a high-performance coprocessor that can be started/monitored (and interacted with via RPMsg when enabled) from CM33-NS.
+
+---
+
+## What you get
+
+- Portable CM33-NS tasks (Logger, RemoteProc, SCMI Manager, Watchdog Monitor, optional OpenAMP/Button/Display).
+- Thin driver interfaces (in `Includes/`) so each project can provide its own board/peripheral integration without forking this stack.
+- Config templates (in `Config/`) to keep feature enablement and task sizing centralized.
+- A post-build utility (in `postbuild/`) to assemble/sign the final TF-M S/NS combined image and copy flashing-ready artifacts into a project-local `bin/` folder (created at `${BASE_DIR}/bin`).
+
+---
+
+## Architecture (integration flow)
+
+```text
+┌──────────┐  ┌──────────────┐  ┌──────────────────────┐
+│ MCUboot  │->│ TF-M (CM33-S)│->│ CM33-NS FreeRTOS app │
+└──────────┘  └──────────────┘  └──────────────────────┘
+                                     |
+                                     v
+                  ┌──────────────────────────────┐
+                  │ NSCoreApp_Init() (bootstrap) │
+                  └──────────────────────────────┘
+                                     |
+                                     v
+                  ┌──────────────────────────────┐
+                  │ M33TD_NSAppCore tasks        │
+                  └──────────────────────────────┘
+                     |          |            |
+                     |          |            +-> OpenAMP/libmetal (optional) -> RPMsg
+                     |          +-> Project drivers (CM33/.../AppDriver)
+                     +-> TF-M NS APIs (CPU/WDT/SCMI/notifications)
+                                     |
+                                     v
+                              Cortex-A35 (Linux/BareMetal)
+```
+
+---
+
+## Task-level view (simplified)
+
+The stack is structured around a single bootstrap and a set of tasks.
+
+```text
+NS Application Manager (your project)
+   |
+   +-> NSCoreApp_Init()
+            |
+            +-> LoggerTask            (required)
+            +-> ScmiMgrTask           (required)
+            +-> RemoteProcTask        (required)
+            +-> WdgMonitorTask        (required)
+            +-> UserAppTask           (optional)
+            +-> BtnMonitorTask        (optional)
+            +-> OpenAMPTask           (optional)
+            +-> DisplayTask           (optional)
+
+Each task typically:
+   - Uses TF-M NS APIs for secure services (CPU/WDT/SCMI)
+   - Calls a thin driver interface in Utilities/M33TD_NSAppCore/Includes/
+      implemented by the project in CM33/.../M33TD_NSAppCore/AppDriver/
+```
+
+---
+
+## Task dependencies and feature bundles
+
+The stack supports multiple integration “profiles” by enabling/disabling tasks. Some tasks are independent, but others are feature carriers and must be enabled together to deliver an end-to-end functionality.
+
+### Core tasks (baseline)
+
+These are the baseline “Non‑Secure Application Manager” services and are expected to remain enabled in most projects:
+
+- **LoggerTask**: logging infrastructure.
+- **ScmiMgrTask**: SCMI notification/event handling.
+- **RemoteProcTask**: CA35 start/stop/monitor + crash recovery.
+- **WdgMonitorTask**: watchdog supervision.
+
+### Inter-processor communication (RPMsg)
+
+Inter-processor communication between Linux/A35 and CM33-NS is provided by **OpenAMPTask**.
+
+When `ENABLE_OPENAMP_TASK=1`, OpenAMPTask initializes OpenAMP/libmetal and creates RPMsg endpoints. In this stack, OpenAMPTask is intentionally focused on two categories of use-cases:
+
+1. **Display-related RPMsg events (Linux → CM33)**
+  - When `ENABLE_DISPLAY_TASK=1`, OpenAMPTask registers a **Display RPMsg endpoint** and forwards inbound messages to the DisplayTask callback.
+  - This is used for Linux-driven display interactions such as stopping a splash screen and other display control flows.
+  - If DisplayTask is disabled, display-endpoint code is excluded from OpenAMPTask by conditional compilation.
+
+2. **M33-initiated power requests (CM33 → Linux/A35)**
+  - OpenAMPTask exposes a **Power RPMsg endpoint** used to send simple power-management commands to the remote side (e.g., `reboot` / `shutdown`).
+  - The reference wiring uses BtnMonitorTask to trigger a reboot request on a **very long press** (see `App/Src/openamp_task.c` and `App/Src/btn_monitor_task.c`).
+  - OpenAMPTask can also be used without BtnMonitorTask: any project code can post an OpenAMP command to request reboot/shutdown.
+
+**Project-level OpenAMP binding (required when `ENABLE_OPENAMP_TASK=1`)**
+
+OpenAMPTask depends on a project-provided OpenAMP “glue layer” (OpenAMP MW integration files) that implements the APIs used by `App/Src/openamp_task.c`.
+
+- The ST middleware provides *templates* in `Firmware/Middlewares/Third_Party/OpenAMP/mw_if/app_if/openamp_template.c/.h` and `openamp_conf_template.h`, but they are **not used as-is** in this stack.
+- For this OpenAmpTask, the template must be adapted (callbacks/transport) so that mailbox RX notifications are forwarded into the task. In particular, the `openamp.c/.h` used by your project should provide a **register API** so the OpenAMP MW can notify the stack on RX events.
+- Recommended approach: copy/adapt the OpenAMP integration from the **full featured application reference** listed in [Reference projects](#reference-projects) (OpenAMP MW glue: `openamp.c/.h`, `openamp_conf.h`, plus the project’s IPCC/MPU setup in `openamp_driver.c`).
+
+If your project does not need RPMsg (no display endpoint handling and no M33-initiated power requests), you can keep `ENABLE_OPENAMP_TASK=0`.
+
+### Button Monitor usage
+
+BtnMonitorTask is a generic button press classifier:
+
+- It can be used independently by registering listeners for button events.
+- In the reference wiring, it is also used as an input trigger for M33-initiated reboot through OpenAMPTask.
+
+### Display pipeline enablement
+
+Display functionality is split into:
+
+- **DisplayTask**: display control logic (splash, panel init, etc.).
+- **OpenAMPTask display endpoint**: RPMsg plumbing used to receive display-related messages from Linux and dispatch them to DisplayTask.
+
+This is why display-related RPMsg handling is typically enabled as a bundle:
+
+- `ENABLE_DISPLAY_TASK=1` + `ENABLE_OPENAMP_TASK=1`
+
+Projects commonly expose a “minimal/headless” build profile where the display pipeline is disabled. In that case, other tasks (including OpenAMPTask for power requests and BtnMonitorTask) can still be enabled if desired.
+
+For common end-to-end combinations of these tasks (profiles), see [Recommended profiles](#recommended-profiles-examples) in the **Feature toggles (generic)** section.
+
+## Repository layout
+
+```text
+M33TD_NSAppCore/
+  |-- App/           (task APIs and implementations)
+  |     |-- Inc/
+  |     |-- Src/
+  |
+  |-- Includes/      (public driver headers)
+  |-- Common/        (shared helpers, optional FaultMgr)
+  |     |-- FaultMgr/
+  |
+  |-- Config/        (templates to copy/override in project)
+  |-- Assets/        (optional splash/animation assets)
+  |-- postbuild/     (postbuild utilities)
+```
+
+- **App/**  
+  RTOS tasks and NS application logic. Public task APIs live in `App/Inc/`, implementations in `App/Src/`.
+
+- **Includes/**  
+  Public driver interfaces that projects must implement. The project provides the concrete drivers that bind tasks to the actual board/peripherals (UART/GPIO/display/etc.), typically under `CM33/.../M33TD_NSAppCore/AppDriver/`.
+
+- **Common/**  
+  Shared helpers used by multiple tasks, plus optional FaultMgr support under `Common/FaultMgr/`.
+
+- **Config/**  
+  Configuration header templates. Projects copy and adapt these (typically into `CM33/NonSecure/FREERTOS/App/`) to control feature enablement and task sizing.
+
+- **Assets/**  
+  Optional visual assets (splash screen, animations, etc.) for display-capable builds.
+
+- **postbuild/**  
+  Standalone CMake post-build utility for assembling NS + Secure binaries, signing the combined image, and copying outputs into `${BASE_DIR}/bin/`.
+
+---
+
+## How projects integrate this stack
+
+### CMake-based projects (recommended)
+
+Reference integration:  
+`Firmware/Projects/STM32MP257F-EV1/Demonstrations/StarterApp_M33TD`
+
+Typical wiring pattern:
+
+1. **Compile stack sources**
+   - Import sources from `Utilities/M33TD_NSAppCore/App/Src` (and optionally `Common/FaultMgr`).
+   - The reference project groups these sources in `cmake/nsappcore_sources.cmake`.
+
+2. **Add include directories**
+   - `Utilities/M33TD_NSAppCore/App/Inc`
+   - `Utilities/M33TD_NSAppCore/Includes`
+   - `Utilities/M33TD_NSAppCore/Common` (and `Common/FaultMgr` if enabled)
+
+3. **Provide project drivers**
+   - Implement the driver interfaces declared in `Utilities/M33TD_NSAppCore/Includes/*.h`.
+   - Place implementations under your project, typically:
+     - `CM33/NonSecure/FREERTOS/M33TD_NSAppCore/AppDriver/`.
+
+4. **Provide configuration headers**
+   - Copy templates from `Utilities/M33TD_NSAppCore/Config/` into your project (commonly `CM33/NonSecure/FREERTOS/App/`).
+   - Rename to:
+     - `app_tasks_config.h`
+     - `nsappcore_config.h`
+
+5. **Call the stack bootstrap**
+   - From your `main.c` (after the RTOS kernel is initialized): call `NSCoreApp_Init()`.
+   - If FaultMgr is enabled, call `FAULT_Init()` before starting tasks.
+
+### Feature toggles (generic)
+
+The stack is primarily controlled through preprocessor macros that accept numeric values `0` (disabled) and `1` (enabled).
+
+Projects may expose these macros as CMake cache options like `ON|OFF`, but the **code-level contract** is always `0|1`.
+
+Defaults shown below match the default macro values in:
+
+- `Utilities/M33TD_NSAppCore/Config/nsappcore_config_template.h` (NSAppCore integration template)
+- `Utilities/M33TD_NSAppCore/Common/FaultMgr/fault_config.h` (FaultMgr defaults; can be overridden by defining macros before including it)
+
+| Feature                 | Macro                              | Default | Values    | Notes                                                                  |
+|-------------------------|------------------------------------|---------|-----------|------------------------------------------------------------------------|
+| Auto-start CA35 at boot | `REMOTE_PROC_AUTO_START`          | `1`     | `0` / `1` | Used by RemoteProcTask to decide whether to request CA35 start.       |
+| Real-time debug log     | `REALTIME_DEBUG_LOG_ENABLED`      | `0`     | `0` / `1` | When `1`, logs print directly (printf) instead of via logger queue.   |
+| Fault exception         | `FAULT_EXCEPTION_ENABLE`          | `1`     | `0` / `1` | Enables FaultMgr exception capture/reporting (if FaultMgr is linked). |
+| Fault backtrace         | `FAULT_EXCEPTION_BACKTRACE_ENABLE`| `1`     | `0` / `1` | Enables backtrace capture when FaultMgr is enabled.                   |
+
+Task-level enable/disable (e.g. `ENABLE_OPENAMP_TASK`, `ENABLE_BTN_MONITOR_TASK`, `ENABLE_DISPLAY_TASK`) is controlled via `app_tasks_config.h` and can be overridden by project-level defines (typically via `nsappcore_config.h` or build flags).
+
+### Task enable defaults and override precedence
+
+The template task defaults come from:  
+`Utilities/M33TD_NSAppCore/Config/app_tasks_config_template.h`
+
+| Task           | Enable macro              | Default                     |
+|----------------|---------------------------|-----------------------------|
+| LoggerTask     | `ENABLE_LOGGER_TASK`      | `1` (required)              |
+| ScmiMgrTask    | `ENABLE_SCMI_MGR_TASK`    | `1` (required)              |
+| RemoteProcTask | `ENABLE_REMOTEPROC_TASK`  | `1` (required)              |
+| WdgMonitorTask | `ENABLE_WDG_MONITOR_TASK` | `1` (required)              |
+| UserAppTask    | `ENABLE_USERAPP_TASK`     | `0`                         |
+| BtnMonitorTask | `ENABLE_BTN_MONITOR_TASK` | `0`                         |
+| OpenAMPTask    | `ENABLE_OPENAMP_TASK`     | `0`                         |
+| DisplayTask    | `ENABLE_DISPLAY_TASK`     | `0` (auto-forced to `1` if `DISPLAY_PANEL_ENABLED` is defined) |
+
+### Recommended profiles (examples)
+
+These examples show common combinations of tasks for typical end-to-end behaviors. Use them as starting points and adapt them to your product needs.
+
+In the table below, `0/1` means “optional depending on your application logic”.
+
+| Profile | `ENABLE_OPENAMP_TASK` | `ENABLE_DISPLAY_TASK` | `ENABLE_BTN_MONITOR_TASK` | Intended use |
+|---|---:|---:|---:|---|
+| Bare Minimum (no RPMsg) | 0 | 0 | 0 | RemoteProc + SCMI + watchdog; no inter-processor messaging |
+| Button only (no RPMsg) | 0 | 0 | 1 | Local button events for CM33-side logic; no Linux/A35 interaction |
+| Power control (M33 → Linux) | 1 | 0 | 0/1 | M33-initiated reboot/shutdown requests via Power RPMsg endpoint |
+| Display control (Linux → M33) | 1 | 1 | 0/1 | Linux-driven display events delivered to DisplayTask via RPMsg |
+| Full featured (display + button-triggered reboot) | 1 | 1 | 1 | Combined display endpoint + button monitoring with very-long-press triggering a power request |
+
+**How this maps to the provided reference projects**
+
+- Template_StarterApp_M33TD is a good bare-minimum starting point and is closest to **Bare Minimum (no RPMsg)**.
+- StarterApp_M33TD is a full featured application reference and is closest to **Full featured (display + button-triggered reboot)**.
+
+See: [Reference projects](#reference-projects).
+
+**Why `#ifndef` matters**  
+Each `ENABLE_*` macro is defined with a `#ifndef` guard in `app_tasks_config.h`. That means the project can override the default by defining the macro *before* `app_tasks_config.h` is included.
+
+In the template `nsappcore_config_template.h`, the include order is:
+
+```text
+nsappcore_config.h
+   |
+  +-> (optional) higher-level build options map to ENABLE_* and feature macros
+   +-> (optional) defines ENABLE_DISPLAY_TASK=1 if DISPLAY_PANEL_ENABLED is set
+   +-> includes app_tasks_config.h  (defaults apply only if still undefined)
+```
+
+For correctness, the stack also enforces that the core tasks remain enabled via compile-time checks in `nsappcore_config.h`.
+
+### How to set macros
+
+**CMake (generic pattern)**
+
+Set macros on the target that builds your CM33-NS application:
+
+```cmake
+target_compile_definitions(<your_target> PRIVATE
+   REMOTE_PROC_AUTO_START=1
+   REALTIME_DEBUG_LOG_ENABLED=0
+   FAULT_EXCEPTION_ENABLE=1
+   FAULT_EXCEPTION_BACKTRACE_ENABLE=0
+)
+```
+
+If your build system exposes higher-level options, ensure they ultimately define these macros (as `0|1`) for the CM33-NS target.
+
+**STM32CubeIDE**
+
+Add macro definitions in:
+
+`Project Properties -> C/C++ Build -> Settings -> Tool Settings -> MCU GCC Compiler -> Preprocessor`
+
+Examples:
+
+- `REMOTE_PROC_AUTO_START=1`
+- `REALTIME_DEBUG_LOG_ENABLED=0`
+
+### STM32CubeIDE projects
+
+The model is the same: link stack sources and headers, but keep board-specific code local to the project.
+
+Recommended separation:
+
+- **Stack sources**: linked from `Utilities/M33TD_NSAppCore` (do not copy).
+- **Board specifics**: implemented in the project under `CM33/NonSecure/FREERTOS/M33TD_NSAppCore/AppDriver/`.
+- **Configuration**: keep `app_tasks_config.h` and `nsappcore_config.h` under:
+  - `CM33/NonSecure/FREERTOS/App/`
+
+## Task catalog (what calls what)
+
+The stack follows a consistent pattern:
+
+- Task implementation lives in `App/Src/*_task.c`.
+- Each task calls into a driver interface in `Includes/*_driver.h`.
+- Your project provides the driver implementation in `.../AppDriver/*_driver.c`.
+
+| Task          | Purpose                                   | Enablement                                      | Main dependencies                          |
+|---------------|-------------------------------------------|-------------------------------------------------|--------------------------------------------|
+| NSCoreApp     | Bootstraps and starts enabled tasks       | Always                                          | FreeRTOS/CMSIS-RTOS2                       |
+| LoggerTask    | Central logging + sinks                   | Always (typically)                              | Project logger output driver               |
+| UserAppTask   | Example app logic (LED, liveness demo)    | Enabled by config                               | Project LED driver                         |
+| RemoteProcTask| Start/stop/monitor CA35 via TF-M          | Enabled by config + `REMOTE_PROC_AUTO_START`    | TF-M CPU IOCTL, project remoteproc driver  |
+| ScmiMgrTask   | Handle SCMI notifications/events          | Enabled by config                               | TF-M SCMI + notification APIs              |
+| WdgMonitorTask| Watchdog ping/supervision                 | Enabled by config                               | TF-M WDT IOCTL                             |
+| BtnMonitorTask| Button press classification               | `ENABLE_BTN_MONITOR_TASK`                       | Project button driver                      |
+| OpenAMPTask   | RPMsg endpoints + control messages        | `ENABLE_OPENAMP_TASK`                           | OpenAMP/libmetal, mailbox/IPCC platform    |
+| DisplayTask   | Display control logic and UI flows        | `ENABLE_DISPLAY_TASK`                           | Project display driver (FULL builds), OpenAMPTask for Linux-driven display RPMsg |
+
+---
+
+## Postbuild Utility: Binary Assembly and Signing
+
+The `postbuild/` directory contains a CMake project that automates the final steps of binary assembly and signing for STM32MP2 M33TD applications. It combines the built Non‑Secure (NS) application with Trusted Firmware‑M (TF‑M) Secure binaries, producing signed images and deployment artifacts.
+
+### What it does
+
+- Assembles the NS binary (e.g. `${PROJECT_NAME}.bin`) with the TF‑M Secure binary (e.g. `tfm_s.bin`) into a combined image (e.g. `${PROJECT_NAME}_tfm_s_ns.bin`).
+- Signs the combined image into `${PROJECT_NAME}_tfm_s_ns_signed.bin` using the TF‑M signing keys.
+- Copies output binaries and bootloader files into `${BASE_DIR}/bin/` for flashing or further use, typically including:
+  - `${PROJECT_NAME}.bin`
+  - `tfm_s_ns_signed.bin` (signed TF-M S/NS combined image)
+  - `bl2.stm32`
+  - `ddr_phy_signed.bin`
+
+### How to use
+
+You can integrate the postbuild utility in different ways depending on your build flow.
+
+#### 1. Standalone mode (manual / scripted)
+
+Invoke the postbuild utility directly using CMake, passing the required variables (and optionally `NS_BUILD_DIR`):
+
+- `PROJECT_NAME` — base name of your NS application binary (without extension).
+- `TFM_BUILD_DIR` — path to the TF‑M build directory containing Secure images and keys.
+- `NS_BUILD_DIR` — directory that contains the built NS artifacts (`${PROJECT_NAME}.elf/.bin`). Optional: in standalone mode this defaults to the parent of the postbuild build directory.
+- `BASE_DIR` — output base directory where the `bin/` folder will be created (commonly the CM33 project root).
+
+Example:
+
+```sh
+cmake -G "Unix Makefiles" -S Utilities/M33TD_NSAppCore/postbuild -B build_post \
+  -DPROJECT_NAME=<your_ns_project_name> \
+  -DTFM_BUILD_DIR=<path-to-tfm-build> \
+  -DNS_BUILD_DIR=<path-to-ns-build> \
+  -DBASE_DIR=<your_project_root>
+
+cmake --build build_post --target M33TD_NSAppCore_postbuild
+```
+
+This is suitable when invoking post-build from STM32CubeIDE, or when running from the command line.
+
+#### 2. Subdirectory mode (CMake integration)
+
+Include the postbuild CMake project as a subdirectory of your main CMake project:
+
+```cmake
+add_subdirectory(Utilities/M33TD_NSAppCore/postbuild)
+
+set(PROJECT_NAME <your_ns_project_name>)
+set(TFM_BUILD_DIR <path-to-tfm-build>)
+set(BASE_DIR <your_project_root>)
+
+add_dependencies(<your_ns_target> M33TD_NSAppCore_postbuild)
+```
+
+- The parent project passes `PROJECT_NAME`, `TFM_BUILD_DIR`, and `BASE_DIR`.
+- The `M33TD_NSAppCore_postbuild` target runs after the main application is built, so images are assembled and signed automatically as part of your normal build.
+
+#### 3. STM32CubeIDE post‑build step
+
+From STM32CubeIDE, you can call the postbuild utility as a post‑build step so that it runs automatically every time you build your CM33‑NS application.
+
+Add a post‑build command similar to:
+
+```sh
+cmake -G "Unix Makefiles" \
+  -S ../../../../../../../../Utilities/M33TD_NSAppCore/postbuild \
+  -B M33TD_NSAppCore_postbuild \
+  -DPROJECT_NAME=${BuildArtifactFileBaseName} \
+  -DTFM_BUILD_DIR="<path-to-tfm-build>" \
+  -DBASE_DIR=../../../../ \
+  && cmake --build M33TD_NSAppCore_postbuild --target M33TD_NSAppCore_postbuild
+```
+
+- `${BuildArtifactFileBaseName}` is provided by CubeIDE and resolves to your NS artifact base name.
+- The relative paths (`-S`, `-B`, `-DBASE_DIR`) should be adapted to your project’s folder layout.
+
+### Steps performed internally
+
+For details, see `postbuild/CMakeLists.txt`. In summary, the utility:
+
+1. Assembles NS and Secure images using the provided Python scripts.
+2. Signs the combined image with the TF‑M signing key.
+3. Copies the resulting binaries and bootloader files into `${BASE_DIR}/bin/`.
+
+You can customize:
+
+- Input file names and locations.
+- Output directory layout.
+- Signing behavior and keys.
+
+by adjusting the CMake variables passed to the postbuild project or by extending the logic in `postbuild/CMakeLists.txt`.
+
+---
+
+## Reference projects
+
+- `Firmware/Projects/STM32MP257F-EV1/Demonstrations/StarterApp_M33TD`  
+  (full featured application reference)
+- `Firmware/Projects/*/Templates/Template_StarterApp_M33TD`  
+  (bare-minimum starting point for new projects)

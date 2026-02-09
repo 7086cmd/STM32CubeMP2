@@ -28,10 +28,17 @@ set(DEFINITIONS "-DSTM32MP257Cxx \
 				-DTCPP0203_SUPPORT \
 				-DUSBPD_PORT_COUNT=1 \
 				-D_DRP \
-				-D_TRACE \
 				-DUSBPDCORE_LIB_PD3_FULL \
 				-D_SRC_CAPA_EXT \
 				-D_RTOS")
+        
+# To enable USBPD trace, configure with: -DTRACE=ON
+# Option for TRACE (_TRACE macro)
+option(TRACE "USBPD Trace feature (_TRACE macro)" OFF)
+
+if(TRACE)
+    add_definitions(-D_TRACE)
+endif()
 
 set(TARGET USBPD_DRP_UCSI_CM33_NonSecure)
 
@@ -125,6 +132,7 @@ set(USBPDLIB_SRC_FILES ${USBPDLIB_SRC_FILES}
 						)
 set(SCMIAGENT_SRC_FILES ${SCMIAGENT_SRC_FILES}
 						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/mbox_scmi.c
+						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/scmi_clock.c
 						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/scmi_helpers.c 
 						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/scmi_regu.c 
 						)
@@ -140,7 +148,7 @@ set(CMSIS_SRC_FILES ${CMSIS_SRC_FILES}
 # Set application source files
 set(APPLICATION_SRC ${APPLICATION_SRC} ${HAL_SRC_FILES} ${OPENAMP_SRC_FILES} ${OPENAMP_SRC_GEN_FILES} ${FREERTOS_SRC_FILES} ${BSP_SRC_FILES} ${USBPDLIB_SRC_FILES} ${SCMIAGENT_SRC_FILES} ${UTILS_SRC_FILES} ${CMSIS_SRC_FILES}
 						${BASE_DIR}/CM33/NonSecure/FREERTOS/App/app_freertos.c
-						${BASE_DIR}/CM33/NonSecure/Core/Src/startup_stm32mp257cxx_m33.s
+						${BASE_DIR}/../../../../Drivers/CMSIS/Device/ST/STM32MP2xx/Source/Templates/gcc/startup_stm32mp257cxx_m33.s
 						${BASE_DIR}/CM33/NonSecure/Core/Src/led_thread.c 
 						${BASE_DIR}/CM33/NonSecure/Core/Src/main.c 
 						${BASE_DIR}/CM33/NonSecure/Core/Src/syscalls.c

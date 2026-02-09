@@ -28,7 +28,7 @@
 /* Private functions ---------------------------------------------------------*/
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim6;
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 
 /******************************************************************************/
 /*            Cortex-M33 Processor Exceptions Handlers                         */
@@ -135,5 +135,5 @@ void TIM6_IRQHandler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }

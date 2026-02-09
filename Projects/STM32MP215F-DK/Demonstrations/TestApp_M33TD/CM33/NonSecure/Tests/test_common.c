@@ -18,7 +18,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_common.h"
-#include "app_freertos.h"
 
 /**
   * @brief  Run a test with init, run, and deinit function pointers.
@@ -49,3 +48,4 @@ TEST_STATUS Run_Test(TEST_STATUS (*init)(void), TEST_STATUS (*run)(void), TEST_S
     }
     return status;
 }
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

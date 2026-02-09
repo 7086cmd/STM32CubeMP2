@@ -64,7 +64,7 @@
 
 
 /* Initialize the openamp framework*/
-int MX_OPENAMP_Init(int RPMsgRole, rpmsg_ns_bind_cb ns_bind_cb);
+int MX_OPENAMP_Init(int RPMsgRole, rpmsg_ns_bind_cb ns_bind_cb,  IPCC_HandleTypeDef * hipcc);
 
 /* Deinitialize the openamp framework*/
 void OPENAMP_DeInit(void);
@@ -73,6 +73,11 @@ void OPENAMP_DeInit(void);
 int OPENAMP_create_endpoint(struct rpmsg_endpoint *ept, const char *name,
                             uint32_t dest, rpmsg_ept_cb cb,
                             rpmsg_ns_unbind_cb unbind_cb);
+
+/* Create and register the endpoint with a fixed address */
+int OPENAMP_create_fixed_endpoint(struct rpmsg_endpoint *ept, const char *name,
+                                  uint32_t src, uint32_t dest, rpmsg_ept_cb cb,
+                                  rpmsg_ns_unbind_cb unbind_cb);
 
 /* Check for new rpmsg reception */
 void OPENAMP_check_for_message(void);

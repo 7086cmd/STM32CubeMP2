@@ -19,32 +19,27 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stdio.h"
-#include "cmsis_os2.h"
-#include "app_freertos.h"
-
-/** @addtogroup STM32MP2xx_Application
-  * @{
-  */
-
-/** @addtogroup SPE_NSCubeProjects
-  * @{
-  */
+#include "nscoreapp_init.h"
+/* USER CODE BEGIN Includes */
+/* Add additional includes here */
+/* USER CODE END Includes */
 
 /* Callbacks prototypes */
 /* Global variables ----------------------------------------------------------*/
-COM_InitTypeDef COM_Init;
-
-uint32_t status = 0;
+#if defined(DISPLAY_PANEL_ENABLED)
+LTDC_HandleTypeDef   hLtdcHandler;
+#endif
 /* External function prototypes ----------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
+#if defined(DISPLAY_PANEL_ENABLED)
+void MX_LTDC_Init(LTDC_ColorTypeDef Color, uint32_t format);
+#endif
 /* USER CODE END PFP */
-
 /**
   * @brief  Main program
   * @retval None
@@ -52,11 +47,15 @@ uint32_t status = 0;
 int main(void)
 {
 
+  /* USER CODE BEGIN Init */
+  /* Initialize fault and any pre-HAL hooks */
+  FAULT_Init();
+  /* USER CODE END Init */
+
 #ifdef DEBUG
   volatile uint32_t debug = 1;
   while(debug);
 #endif
-
   if(IS_DEVELOPER_BOOT_MODE())
   {
     SystemClock_Config();
@@ -68,40 +67,28 @@ int main(void)
 
   HAL_Init();
 
-  /* Initialize led */
-  BSP_LED_Init(LED3);
-
-  /* Initialize Display destination */
-  if(ResMgr_Request(RESMGR_RESOURCE_RIFSC, RESMGR_RIFSC_UART4_ID) == RESMGR_STATUS_ACCESS_OK) {
-	  COM_Init.BaudRate                = 115200;
-	  COM_Init.WordLength              = UART_WORDLENGTH_8B;
-	  COM_Init.StopBits                = UART_STOPBITS_1;
-	  COM_Init.Parity                  = UART_PARITY_NONE;
-	  COM_Init.HwFlowCtl               = UART_HWCONTROL_NONE;
-	  /* Initialize and select COM1 which is the COM port associated with current Core */
-	  BSP_COM_Init(COM_VCP_CM33, &COM_Init);
-	  BSP_COM_SelectLogPort(COM_VCP_CM33);
-  }
-  /* Add your non-secure example code here
-     */
-  printf("[NS] [INF] Non-Secure system starting...\r\n");
-
-  printf("\033[1;34m[NS] [INF] STM32Cube FW version: v%ld.%ld.%ld-rc%ld \033[0m\r\n",
-         ((HAL_GetHalVersion() >> 24) & 0x000000FF),  // Main version
-         ((HAL_GetHalVersion() >> 16) & 0x000000FF),  // Sub1 version
-         ((HAL_GetHalVersion() >> 8) & 0x000000FF),   // Sub2 version
-         (HAL_GetHalVersion() & 0x000000FF));         // RC version
-
   osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */
-  MX_FREERTOS_Init();
+
+  /* USER CODE BEGIN AppInit */
+  /* Initialize application tasks and modules */
+  NSCoreApp_Init();
+  /* Add other task/module initializations here */
+  /* e.g., MyCustomTask_Init(); */
+  /* USER CODE END AppInit */
 
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+    /* Idle loop: place background processing here */
   }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -254,6 +241,88 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
+
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM6) {
+    HAL_IncTick();
+  }
+}
+
+#if defined(DISPLAY_PANEL_ENABLED)
+/**
+ * @brief  LTDC Initialization Function
+ * @param  Color: Background color struct
+ * @param  format: Pixel format (unused in this implementation)
+ * @retval None
+ *
+ * This function configures the LTDC peripheral using direct register access.
+ * It uses the timing configuration from the current API and calls the LTDC MSP init.
+ */
+void MX_LTDC_Init(LTDC_ColorTypeDef Color, uint32_t format)
+{
+    hLtdcHandler.Instance = LTDC;
+
+    HAL_LTDC_MspInit(&hLtdcHandler);
+
+    /* Direct register access for LTDC configuration */
+    LTDC_TypeDef *LTDCx = hLtdcHandler.Instance;
+
+    /* Timing and polarity values */
+    uint32_t horizontalSync = LCD_HSYNC - 1U;
+    uint32_t accumulatedHBP = LCD_HSYNC + LCD_HBP - 1U;
+    uint32_t accumulatedActiveW = LCD_HSYNC + LCD_HBP + LCD_WIDTH - 1U;
+    uint32_t totalWidth = LCD_HSYNC + LCD_HBP + LCD_WIDTH + LCD_HFP - 1U;
+    uint32_t verticalSync = LCD_VSYNC - 1U;
+    uint32_t accumulatedVBP = LCD_VSYNC + LCD_VBP - 1U;
+    uint32_t accumulatedActiveH = LCD_VSYNC + LCD_VBP + LCD_HEIGHT - 1U;
+    uint32_t totalHeigh = LCD_VSYNC + LCD_VBP + LCD_HEIGHT + LCD_VFP - 1U;
+
+    /* Clear timing registers before setting */
+    LTDCx->SSCR &= ~(LTDC_SSCR_VSH | LTDC_SSCR_HSW);
+    LTDCx->BPCR &= ~(LTDC_BPCR_AVBP | LTDC_BPCR_AHBP);
+    LTDCx->AWCR &= ~(LTDC_AWCR_AAH | LTDC_AWCR_AAW);
+    LTDCx->TWCR &= ~(LTDC_TWCR_TOTALH | LTDC_TWCR_TOTALW);
+    LTDCx->BCCR &= ~(LTDC_BCCR_BCBLUE | LTDC_BCCR_BCGREEN | LTDC_BCCR_BCRED);
+
+    /* Set polarity */
+    LTDCx->GCR &= ~(LTDC_GCR_HSPOL | LTDC_GCR_VSPOL | LTDC_GCR_DEPOL | LTDC_GCR_PCPOL);
+    LTDCx->GCR |= (LTDC_HSPOLARITY_AL | LTDC_VSPOLARITY_AL | LTDC_DEPOLARITY_AL | LTDC_PCPOLARITY_IPC);
+
+    /* Set Synchronization size */
+    LTDCx->SSCR = (horizontalSync << 16U) | (verticalSync);
+
+    /* Set Accumulated Back porch */
+    LTDCx->BPCR = (accumulatedHBP << 16U) | (accumulatedVBP);
+
+    /* Set Accumulated Active Width */
+    LTDCx->AWCR = (accumulatedActiveW << 16U) | (accumulatedActiveH);
+
+    /* Set Total Width */
+    LTDCx->TWCR = (totalWidth << 16U) | (totalHeigh);
+
+    /* Set the background color value */
+    uint32_t bgColor = ((uint32_t)(Color.Green) << 8U) | ((uint32_t)(Color.Red) << 16U) | ((uint32_t)(Color.Blue));
+    LTDCx->BCCR = bgColor;
+
+    /* Configure the Fifo Underrun Threshold register */
+    LTDCx->FUTR &= ~(LTDC_FUTR_THRE);
+    LTDCx->FUTR = (uint32_t)(hLtdcHandler.Init.FifoUnderThresh);
+
+    /* Enable LTDC */
+    LTDCx->GCR |= LTDC_GCR_LTDCEN;
+}
+
+#endif
 
 /**
   * @brief  This function is executed in case of error occurrence.

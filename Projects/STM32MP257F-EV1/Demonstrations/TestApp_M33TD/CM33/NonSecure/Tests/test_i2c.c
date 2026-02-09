@@ -18,7 +18,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_i2c.h"
-#include "app_freertos.h"
 
 #ifdef ENABLE_I2C_TEST  
 

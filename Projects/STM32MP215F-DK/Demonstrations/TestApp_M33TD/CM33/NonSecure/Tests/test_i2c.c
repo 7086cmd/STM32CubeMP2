@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    test_i2c.c
@@ -19,9 +18,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_i2c.h"
-#include "app_freertos.h"
 
-#ifdef ENABLE_I2C_TEST  // Conditionally compile the I2C test code
+#ifdef ENABLE_I2C_TEST  
 
 /* USER CODE BEGIN Test_I2C_Implementation */
 

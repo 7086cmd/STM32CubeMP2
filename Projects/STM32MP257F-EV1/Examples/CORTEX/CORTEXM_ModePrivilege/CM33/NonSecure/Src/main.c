@@ -33,9 +33,12 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define SP_PROCESS_SIZE             0x200  /* Process stack size */
+#ifdef ICACHE_DCACHE_USE
+#define ICACHE_DCACHE_ENABLE
+#endif
 /* USER CODE END PD */
 /* handler declaration */
-IPCC_HandleTypeDef hipcc;
+IPCC_HandleTypeDef hipcc1;
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
@@ -57,6 +60,11 @@ __IO uint8_t debug = 1;
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_IPCC_Init(void);
+#ifdef ICACHE_DCACHE_ENABLE
+static void MX_ICACHE_Init(void);
+static void MX_DCACHE_Init(void);
+DCACHE_HandleTypeDef hdcache = {0};
+#endif
 /* USER CODE BEGIN PFP */
 static __INLINE  void __SVC(void);
 /* Private function prototypes -----------------------------------------------*/
@@ -108,6 +116,11 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+
+#ifdef ICACHE_DCACHE_ENABLE
+  MX_DCACHE_Init();
+  MX_ICACHE_Init();
+#endif
 
   /* USER CODE BEGIN Init */
 
@@ -223,7 +236,7 @@ int main(void)
     /* USER CODE END WHILE */
     /* LED3 is slowly blinking (1 sec. period) once test finished */
 	BSP_LED_Toggle(LED3);
-	HAL_Delay(1000);
+	HAL_Delay(500);
     /* USER CODE BEGIN 3 */
 
   }
@@ -395,8 +408,8 @@ static void MX_GPIO_Init(void)
 static void MX_IPCC_Init(void)
 {
 
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
@@ -423,6 +436,56 @@ void CoproSync_ShutdownCb(IPCC_HandleTypeDef * hipcc, uint32_t ChannelIndex, IPC
   /* Wait for complete shutdown */
   while(1);
 }
+
+#ifdef ICACHE_DCACHE_ENABLE
+/**
+  * @brief Instruction Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ICACHE_Init(void)
+{
+
+  if(HAL_ICACHE_DeInit() != HAL_OK)
+  {
+    Error_Handler();
+  }
+  ICACHE_RegionConfigTypeDef pRegionConfig = {0};
+  pRegionConfig.TrafficRoute    = ICACHE_MASTER2_PORT;
+  pRegionConfig.OutputBurstType = ICACHE_OUTPUT_BURST_INCR;
+  pRegionConfig.Size            = ICACHE_REGIONSIZE_2MB;
+  pRegionConfig.BaseAddress     = 0x00000000;
+  pRegionConfig.RemapAddress    = 0x80000000;
+
+  if (HAL_ICACHE_EnableRemapRegion(ICACHE_REGION_0, &pRegionConfig) != HAL_OK)
+  {
+  	 Error_Handler();
+  }
+
+  if (HAL_ICACHE_Enable() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+}
+
+/**
+  * @brief Data Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DCACHE_Init(void)
+{
+
+  hdcache.Instance = DCACHE;
+  hdcache.Init.ReadBurstType = DCACHE_READ_BURST_WRAP;
+
+  if (HAL_DCACHE_Init(&hdcache) != HAL_OK)
+  {
+     Error_Handler();
+  }
+
+}
+#endif
 
 /**
   * @brief  This function is executed in case of error occurrence.

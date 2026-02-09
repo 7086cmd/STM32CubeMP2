@@ -28,13 +28,15 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 /* The size of the plaintext in Byte */
 #define DATA_SIZE          ((uint32_t)64)
+#ifdef ICACHE_DCACHE_USE
+#define ICACHE_DCACHE_ENABLE
+#endif /* ICACHE_DCACHE_ENABLE */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,7 +45,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-IPCC_HandleTypeDef   hipcc;
+IPCC_HandleTypeDef   hipcc1;
 
 /* USER CODE BEGIN PV */
 
@@ -91,6 +93,12 @@ static void MX_DMA_Init(void);
 static void MX_CRYP_Init(void);
 static void MX_CRYP_DeInit(void);
 static void MX_IPCC_Init(void);
+#ifdef ICACHE_DCACHE_ENABLE
+static void MX_ICACHE_Init(void);
+static void MX_DCACHE_Init(void);
+static void MPU_Config(void);
+DCACHE_HandleTypeDef hdcache = {0};
+#endif /* ICACHE_DCACHE_ENABLE */
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -132,6 +140,11 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+#ifdef ICACHE_DCACHE_ENABLE
+  MPU_Config();
+  MX_DCACHE_Init();
+  MX_ICACHE_Init();
+#endif /* ICACHE_DCACHE_ENABLE */
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -164,6 +177,10 @@ int main(void)
 	/*Corpo Sync Initialization*/
 	CoproSync_Init();
   }
+#ifdef ICACHE_DCACHE_ENABLE
+  /* Flushing the cache before DMA transfer */
+  HAL_DCACHE_CleanByAddr(&hdcache, (uint32_t*)aPlaintext, DATA_SIZE);
+#endif /* ICACHE_DCACHE_ENABLE */
 
   /*##-1- Start the AES encryption in ECB chaining mode with HPDMA ###########*/
   if(HAL_CRYP_Encrypt_DMA(&hcryp, (uint32_t*)aPlaintext, DATA_SIZE, (uint32_t*)aEncryptedText) != HAL_OK)
@@ -180,6 +197,10 @@ int main(void)
   while (HAL_CRYP_GetState(&hcryp) != HAL_CRYP_STATE_READY)
   {
   }
+#ifdef ICACHE_DCACHE_ENABLE
+  /* Invalidating cache lines after DMA transfer */
+  HAL_DCACHE_InvalidateByAddr(&hdcache, (uint32_t*)aEncryptedText, DATA_SIZE);
+#endif /* ICACHE_DCACHE_ENABLE */
 
   /*##-2- Check the encrypted text with the expected one #####################*/
   if(memcmp(aEncryptedText, aCyphertext, DATA_SIZE) != 0)
@@ -204,6 +225,11 @@ int main(void)
     Error_Handler();
   }
 
+#ifdef ICACHE_DCACHE_ENABLE
+  /* Flushing the cache before DMA transfer */
+  HAL_DCACHE_CleanByAddr(&hdcache, (uint32_t*)aDecryptedText, DATA_SIZE);
+#endif /* ICACHE_DCACHE_ENABLE */
+
   /*##-3- Start the AES decryption in ECB chaining mode with HPDMA ###########*/
   if(HAL_CRYP_Decrypt_DMA(&hcryp, (uint32_t*)aEncryptedText, DATA_SIZE, (uint32_t*)aDecryptedText) != HAL_OK)
   {
@@ -219,6 +245,11 @@ int main(void)
   while (HAL_CRYP_GetState(&hcryp) != HAL_CRYP_STATE_READY)
   {
   }
+
+#ifdef ICACHE_DCACHE_ENABLE
+  /* Invalidating cache lines after DMA transfer */
+  HAL_DCACHE_InvalidateByAddr(&hdcache, (uint32_t*)aDecryptedText, DATA_SIZE);
+#endif /* ICACHE_DCACHE_ENABLE */
 
   /*##-4- Check the decrypted text with the expected one #####################*/
   if(memcmp(aDecryptedText, aPlaintext, DATA_SIZE) != 0)
@@ -483,8 +514,8 @@ static void MX_CRYP_DeInit(void)
 static void MX_IPCC_Init(void)
 {
 
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
@@ -514,6 +545,115 @@ void CoproSync_ShutdownCb(IPCC_HandleTypeDef * hipcc, uint32_t ChannelIndex, IPC
   /* Wait for complete shutdown */
   while(1);
 }
+
+#ifdef ICACHE_DCACHE_ENABLE
+/**
+  * @brief Instruction Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ICACHE_Init(void)
+{
+
+  if(HAL_ICACHE_DeInit() != HAL_OK)
+  {
+    Error_Handler();
+  }
+  ICACHE_RegionConfigTypeDef pRegionConfig = {0};
+  pRegionConfig.TrafficRoute    = ICACHE_MASTER2_PORT;
+  pRegionConfig.OutputBurstType = ICACHE_OUTPUT_BURST_INCR;
+  pRegionConfig.Size            = ICACHE_REGIONSIZE_2MB;
+  pRegionConfig.BaseAddress     = 0x00000000;
+  pRegionConfig.RemapAddress    = 0x80000000;
+
+  if (HAL_ICACHE_EnableRemapRegion(ICACHE_REGION_0, &pRegionConfig) != HAL_OK)
+  {
+  	 Error_Handler();
+  }
+
+  if (HAL_ICACHE_Enable() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+}
+
+/**
+  * @brief Data Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DCACHE_Init(void)
+{
+
+  hdcache.Instance = DCACHE;
+  hdcache.Init.ReadBurstType = DCACHE_READ_BURST_WRAP;
+
+  if (HAL_DCACHE_Init(&hdcache) != HAL_OK)
+  {
+     Error_Handler();
+  }
+
+}
+
+/**
+  * @brief  Configure the MPU attributes
+  * @param  None
+  * @retval None
+  */
+static void MPU_Config(void)
+{
+
+   MPU_Region_InitTypeDef MPU_InitStruct;
+   MPU_Attributes_InitTypeDef MPU_Attributes_InitStruct ;
+
+   HAL_MPU_Disable();
+
+   /* write back, read and write allocate */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_WRITE_BACK | MPU_NON_TRANSIENT | MPU_RW_ALLOCATE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER0;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   /* ICACHE */
+   MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+   MPU_InitStruct.Number           = MPU_REGION_NUMBER0;
+   MPU_InitStruct.AttributesIndex  = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.BaseAddress      = 0x00000000;
+   MPU_InitStruct.LimitAddress     = 0x00010000;
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RO;
+   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
+   MPU_InitStruct.IsShareable      = MPU_ACCESS_NOT_SHAREABLE;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* DCACHE */
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x80A00000;
+   MPU_InitStruct.LimitAddress = 0x80DFFC00;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* Data section(IPC_SHMEM_1 & VIRTIO_SHMEM)- NON CACHEABLE */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER1;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER1;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x81200000;
+   MPU_InitStruct.LimitAddress = 0x812FFFFF;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+#endif /* ICACHE_DCACHE_ENABLE */
+
 
 /**
   * @brief  This function is executed in case of error occurrence.

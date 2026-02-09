@@ -43,6 +43,9 @@ volatile int debug = 1;
 #define BUFFER_SIZE_17 17 /* CRC7_DATA8_TEST17[] is 17-byte long */
 #define BUFFER_SIZE_1  1  /* CRC7_DATA8_TEST1[] is 1-byte long   */
 #define BUFFER_SIZE_2  2  /* CRC7_DATA8_TEST2[] is 2-byte long   */
+#ifdef ICACHE_DCACHE_USE
+#define ICACHE_DCACHE_ENABLE
+#endif
 
 /* User-defined polynomial */
 #define CRC_POLYNOMIAL_7B  0x65  /* X^7 + X^6 + X^5 + X^2 + 1,
@@ -59,7 +62,7 @@ volatile int debug = 1;
 /* Private variables ---------------------------------------------------------*/
 
 CRC_HandleTypeDef hcrc;
-IPCC_HandleTypeDef hipcc;
+IPCC_HandleTypeDef hipcc1;
 
 /* Used for storing CRC Value */
 __IO uint32_t uwCRCValue = 0;
@@ -93,6 +96,12 @@ static void SystemClock_Config(void);
 static void MX_CRC_Init(void);
 static void MX_CRC_DeInit(void);
 static void MX_IPCC_Init(void);
+#ifdef ICACHE_DCACHE_ENABLE
+static void MX_ICACHE_Init(void);
+static void MX_DCACHE_Init(void);
+static void MPU_Config(void);
+DCACHE_HandleTypeDef hdcache = {0};
+#endif
 
 /* USER CODE BEGIN PFP */
 
@@ -117,6 +126,12 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+
+#ifdef ICACHE_DCACHE_ENABLE
+  MPU_Config();
+  MX_DCACHE_Init();
+  MX_ICACHE_Init();
+#endif
 
   /* USER CODE BEGIN Init */
 
@@ -445,8 +460,8 @@ static void MX_CRC_Init(void)
 static void MX_IPCC_Init(void)
 {
 
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
@@ -489,6 +504,114 @@ void CoproSync_ShutdownCb(IPCC_HandleTypeDef * hipcc, uint32_t ChannelIndex, IPC
   /* Wait for complete shutdown */
   while(1);
 }
+
+#ifdef ICACHE_DCACHE_ENABLE
+/**
+  * @brief Instruction Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ICACHE_Init(void)
+{
+
+  if(HAL_ICACHE_DeInit() != HAL_OK)
+  {
+    Error_Handler();
+  }
+  ICACHE_RegionConfigTypeDef pRegionConfig = {0};
+  pRegionConfig.TrafficRoute    = ICACHE_MASTER2_PORT;
+  pRegionConfig.OutputBurstType = ICACHE_OUTPUT_BURST_INCR;
+  pRegionConfig.Size            = ICACHE_REGIONSIZE_2MB;
+  pRegionConfig.BaseAddress     = 0x00000000;
+  pRegionConfig.RemapAddress    = 0x80000000;
+
+  if (HAL_ICACHE_EnableRemapRegion(ICACHE_REGION_0, &pRegionConfig) != HAL_OK)
+  {
+  	 Error_Handler();
+  }
+
+  if (HAL_ICACHE_Enable() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+}
+
+/**
+  * @brief Data Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DCACHE_Init(void)
+{
+
+  hdcache.Instance = DCACHE;
+  hdcache.Init.ReadBurstType = DCACHE_READ_BURST_WRAP;
+
+  if (HAL_DCACHE_Init(&hdcache) != HAL_OK)
+  {
+     Error_Handler();
+  }
+
+}
+
+/**
+  * @brief  Configure the MPU attributes
+  * @param  None
+  * @retval None
+  */
+static void MPU_Config(void)
+{
+
+   MPU_Region_InitTypeDef MPU_InitStruct;
+   MPU_Attributes_InitTypeDef MPU_Attributes_InitStruct ;
+
+   HAL_MPU_Disable();
+
+   /* write back, read and write allocate */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_WRITE_BACK | MPU_NON_TRANSIENT | MPU_RW_ALLOCATE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER0;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   /* ICACHE */
+   MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+   MPU_InitStruct.Number           = MPU_REGION_NUMBER0;
+   MPU_InitStruct.AttributesIndex  = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.BaseAddress      = 0x00000000;
+   MPU_InitStruct.LimitAddress     = 0x00010000;
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RO;
+   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
+   MPU_InitStruct.IsShareable      = MPU_ACCESS_NOT_SHAREABLE;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* DCACHE */
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x80A00000;
+   MPU_InitStruct.LimitAddress = 0x80DFFC00;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* Data section(IPC_SHMEM_1 & VIRTIO_SHMEM)- NON CACHEABLE */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER1;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER1;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x81200000;
+   MPU_InitStruct.LimitAddress = 0x812FFFFF;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+#endif
 
 /**
   * @brief  This function is executed in case of error occurrence.

@@ -178,7 +178,7 @@ g_pfnVectors:
     .word   IWDG4_RST_IRQHandler        /* Independent Watchdog 4 Reset through EXTI */
     .word   IWDG5_RST_IRQHandler        /* Independent Watchdog 5 Reset through EXTI */
     .word   WWDG1_IRQHandler            /* Window Watchdog 1 Early Wakeup interrupt */
-    .word   0
+    .word   RESERVED_9_IRQHandler       /* Software IRQ triggered in Secure Context */
     .word   0
     .word   WWDG2_RST_IRQHandler        /* Window Watchdog 2 Reset through EXTI */
     .word   TAMP_IRQHandler             /* Tamper interrupt (include LSECSS interrupts) */
@@ -783,3 +783,4 @@ g_pfnVectors:
     def_irq_handler EXTI1_15_IRQHandler
     def_irq_handler IS2M_IRQHandler
     def_irq_handler DDRPERFM_IRQHandler
+    def_irq_handler RESERVED_9_IRQHandler

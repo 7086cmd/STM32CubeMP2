@@ -43,6 +43,7 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 void IPCC1_RX_IRQHandler(void);
+void EXTI2_7_IRQHandler(void);
 
 #ifdef __cplusplus
 }

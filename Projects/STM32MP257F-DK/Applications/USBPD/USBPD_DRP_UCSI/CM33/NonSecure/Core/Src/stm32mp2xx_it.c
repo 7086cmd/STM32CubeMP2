@@ -36,7 +36,7 @@ void TCPP0203_PORT0_FLG_EXTI_IRQHANDLER(void);
 #endif /* TCPP0203_SUPPORT */
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim6;
-extern IPCC_HandleTypeDef hipcc;
+extern IPCC_HandleTypeDef hipcc1;
 
 /******************************************************************************/
 /*            Cortex-M33 Processor Exceptions Handlers                         */
@@ -196,7 +196,7 @@ void TIM6_IRQHandler(void)
 
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 
 /**

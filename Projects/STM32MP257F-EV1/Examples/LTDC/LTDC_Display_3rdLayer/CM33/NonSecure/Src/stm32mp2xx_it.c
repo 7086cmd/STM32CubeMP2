@@ -19,7 +19,7 @@
 #include "main.h"
 #include "stm32mp2xx_it.h"
 
-extern IPCC_HandleTypeDef   hipcc;
+extern IPCC_HandleTypeDef   hipcc1;
 extern LTDC_HandleTypeDef   LtdcHandle;
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +59,7 @@ void HardFault_Handler(void)
 */
 void IPCC1_RX_IRQHandler(void)
 {
-   HAL_IPCC_RX_IRQHandler(&hipcc);
+   HAL_IPCC_RX_IRQHandler(&hipcc1);
 }
 /**
   * @brief  This function handles Memory Manage exception.

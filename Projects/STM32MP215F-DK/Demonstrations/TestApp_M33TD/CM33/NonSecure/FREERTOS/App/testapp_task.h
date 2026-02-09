@@ -24,18 +24,21 @@ extern "C" {
 #endif
 
 /* Exported macros -----------------------------------------------------------*/
+
+/*------------------- TestApp Task -------------------*/
 /**
-  * @defgroup Exported_Macros Exported Macros
-  * @brief Macros to enable or disable specific tests.
-  * @{
+  * @brief  Stack size, priority, and enable switch for TestApp Task.
   */
+#define TESTAPP_TASK_STACK_SIZE       2048 /**< Stack size for TestApp Task. */
+#define TESTAPP_TASK_PRIORITY         osPriorityBelowNormal /**< Priority for TestApp Task. */
+
 
 #ifndef DISABLE_TIMERS_TEST
 #define ENABLE_TIMERS_TEST /**< Enable Timers Test. */
 #endif
 
 #ifndef DISABLE_I2C_TEST
-//#define ENABLE_I2C_TEST    /**< I2C test is not supported yet. */
+#define ENABLE_I2C_TEST /**< Enable I2C Test. */
 #endif
 
 #ifndef DISABLE_SPI_TEST
@@ -43,7 +46,7 @@ extern "C" {
 #endif
 
 #ifndef DISABLE_ADC_TEST
-//#define ENABLE_ADC_TEST    /**< ADC test is not supported yet. */
+#define ENABLE_ADC_TEST /**< Enable ADC Test. */
 #endif
 
 #ifndef DISABLE_FDCAN_TEST
@@ -55,21 +58,14 @@ extern "C" {
 #endif
 
 /**
-  * @brief Define ENABLE_AUTO_TEST with ON/OFF values.
+  * @brief  Define ENABLE_AUTO_TEST with ON/OFF values.
+  *         0: OFF, 1: ON.
   */
 #ifndef ENABLE_AUTO_TEST
-#define ENABLE_AUTO_TEST 0 /**< 0: OFF, 1: ON. */
+#define ENABLE_AUTO_TEST 0 /**< Enable Auto Test Mode. */
 #endif
 
-/** @} */
-
 /* Exported types ------------------------------------------------------------*/
-/**
-  * @defgroup Exported_Types Exported Types
-  * @brief Types used in the Test Application Task.
-  * @{
-  */
-
 /**
   * @brief Enumeration for test types.
   */
@@ -78,15 +74,7 @@ typedef enum {
     TEST_TYPE_MANUAL  /**< Manual test type. */
 } TestType;
 
-/** @} */
-
 /* Exported functions prototypes ---------------------------------------------*/
-/**
-  * @defgroup Exported_Functions Exported Functions
-  * @brief Function prototypes for the Test Application Task.
-  * @{
-  */
-
 /**
   * @brief  Initialize the Test Application Task and its resources.
   * @retval None
@@ -98,8 +86,6 @@ void TestAppTask_Init(void);
   * @retval None
   */
 void TestAppTask_DeInit(void);
-
-/** @} */
 
 #ifdef __cplusplus
 }

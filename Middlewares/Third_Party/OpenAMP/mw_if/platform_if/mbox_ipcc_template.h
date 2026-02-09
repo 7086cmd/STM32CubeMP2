@@ -52,7 +52,7 @@
 /* USER CODE END EFP */
 
 int MAILBOX_Notify(void *priv, uint32_t id);
-int MAILBOX_Init(void);
+int MAILBOX_Init(IPCC_HandleTypeDef * hipcc);
 int MAILBOX_Poll(struct virtio_device *vdev);
 
 #endif /* MBOX_IPCC_H_ */

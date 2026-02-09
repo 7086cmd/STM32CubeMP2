@@ -21,9 +21,8 @@
   * @brief Includes required for I3C test routines.
   */
 #include "test_i3c.h"
-#include "app_freertos.h"
 
-#ifdef ENABLE_I3C_TEST  // Conditionally compile the I3C test code
+#ifdef ENABLE_I3C_TEST
 
 /* USER CODE BEGIN Includes */
 

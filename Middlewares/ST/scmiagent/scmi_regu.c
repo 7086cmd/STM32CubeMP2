@@ -170,6 +170,16 @@ struct scmi_voltage_config_set_p2a {
     int32_t status;
 };
 
+struct scmi_voltage_domain_attribute_a2p {
+    uint32_t domain_id;
+};
+
+struct scmi_voltage_domain_attribute_p2a {
+    int32_t status;
+    uint32_t attributes;
+    char name[16];
+};
+
 /*
  * ABI for VOLTAGE_CONFIG_GET message payload
  */
@@ -265,13 +275,40 @@ static int scmi_pm_gate(struct scmi_channel *channel,
 	return scmi_status_to_ret(response.status);
 }
 
+/*
+ * Function to get regulator domain attribute
+ *
+ */
+int scmi_voltage_domain_name(struct scmi_channel *channel, unsigned int domain_id, char *name, int n)
+{
+  struct scmi_voltage_domain_attribute_p2a response = { };
+	struct scmi_voltage_domain_attribute_a2p message = {
+		.domain_id = domain_id,
+	};
+	struct scmi_message_data a2p = {
+		.channel = channel,
+		.protocol_id = SCMI_PROTOCOL_ID_VOLTAGE_DOMAIN,
+		.message_id = SCMI_VOLTAGE_DOMAIN_ATTRIBUTES,
+		.message = &message,
+		.message_size = sizeof(message),
+		.response = &response,
+		.response_size = sizeof(response),
+	};
+  int ret = 0;
+  ret = scmi_process_message(&a2p);
+	if (ret)
+		return ret;
+  memcpy(name, response.name, n);
+	return scmi_status_to_ret(response.status);
+}
+
 /* Function to register to regulator framework */
 int scmi_voltage_domain_enable(struct scmi_channel *channel, unsigned int domain_id)
 {
 	return scmi_pm_gate(channel, domain_id, 1);
 }
 
-/* Function to register to clock framework */
+/* Function to de-register to regulator framework */
 int scmi_voltage_domain_disable(struct scmi_channel *channel, unsigned int domain_id)
 {
 	return scmi_pm_gate(channel, domain_id, 0);

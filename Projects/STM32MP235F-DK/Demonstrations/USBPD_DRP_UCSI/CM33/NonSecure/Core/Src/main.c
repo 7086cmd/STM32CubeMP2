@@ -27,15 +27,24 @@
 /* Private includes ----------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#ifdef ICACHE_DCACHE_USE
+#define ICACHE_DCACHE_ENABLE
+#endif
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 COM_InitTypeDef COM_Init;
-IPCC_HandleTypeDef hipcc;
+IPCC_HandleTypeDef hipcc1;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void ResMgr_LL_RCC_HPDMA3_EnableClock();
 static void MX_IPCC_Init(void);
+#ifdef ICACHE_DCACHE_ENABLE
+static void MX_ICACHE_Init(void);
+static void MX_DCACHE_Init(void);
+static void MPU_Config(void);
+DCACHE_HandleTypeDef hdcache = {0};
+#endif
 static void MX_HPDMA3_Init(void);
 static void MX_UCPD1_Init(void);
 
@@ -46,7 +55,6 @@ static void MX_UCPD1_Init(void);
   */
 int main(void)
 {
-
   if(IS_DEVELOPER_BOOT_MODE())
   {
     SystemClock_Config();
@@ -59,6 +67,11 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+#ifdef ICACHE_DCACHE_ENABLE
+  MPU_Config();
+  MX_DCACHE_Init();
+  MX_ICACHE_Init();
+#endif
   /* Initialize all configured peripherals */
   MX_HPDMA3_Init();
 
@@ -79,14 +92,14 @@ int main(void)
   }
 #endif
 
-  loc_printf("\n\n Starting UCSI project(%s: %s) \r\n", __DATE__, __TIME__);
+  loc_printf("\n\n[LOG] : Starting UCSI project (%s | %s) \r\n", __DATE__, __TIME__);
 
   if(!IS_DEVELOPER_BOOT_MODE())
   {
      /* IPCC initialization */
      MX_IPCC_Init();
+     MAILBOX_SCMI_Init();
   }
-  MAILBOX_SCMI_Init();
 
   MX_UCPD1_Init();
   /* Call PreOsInit function */
@@ -267,30 +280,38 @@ static void MX_HPDMA3_Init(void)
   */
 void MX_UCPD1_Deinit(void)
 {
-  int ret = 0;
-
   NVIC_DisableIRQ(UCPD1_IRQn);
 
   LL_DMA_DeInit(HPDMA3, LL_DMA_CHANNEL_0);
   LL_DMA_DeInit(HPDMA3, LL_DMA_CHANNEL_2);
   LL_DMA_DeInit(HPDMA3, LL_DMA_CHANNEL_3);
-  ResMgr_Release(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(35));
-  ResMgr_Release(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0));
 
   /* Disable UCPD regulator */
   if(ResMgr_Request(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0)) == RESMGR_STATUS_ACCESS_OK)
   {
-    PWR->CR1 |= PWR_CR1_UCPDSV; /* Disconnect UCPD from supply */
+    loc_printf("[LOG] : MX_UCPD1_Deinit -> Disable UCPD regulator directly\r\n");
+    HAL_PWREx_DisableSupply(PWR_PVM_UCPD);
   }
   else
   {
+    int ret = 0;
+    loc_printf("[LOG] : MX_UCPD1_Deinit -> Disable UCPD regulator via SCMI\r\n");
     ret = scmi_voltage_domain_disable(&scmi_channel, VOLTD_SCMI_UCPD);
     if (ret)
-      loc_printf("Failed to disable VOLTD_SCMI_UCPD (error code %d)\r\n", ret);
+    {
+      loc_printf("[ERROR] : MX_UCPD1_Deinit -> Failed to disable VOLTD_SCMI_UCPD (error code %d)\r\n", ret);
+    }
+    else
+    {
+      loc_printf("[LOG] : MX_UCPD1_Deinit -> Successfully disabled VOLTD_SCMI_UCPD\r\n");
+    }
   }
 
   /* Peripheral clock disable */
   LL_RCC_UCPD1_DisableClock();
+
+  ResMgr_Release(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(35));
+  ResMgr_Release(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0));
 }
 
 /**
@@ -300,11 +321,7 @@ void MX_UCPD1_Deinit(void)
   */
 static void MX_UCPD1_Init(void)
 {
-  int ret = 0;
-
-  LL_DMA_InitTypeDef DMA_InitStruct = {0};
-
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+  LL_DMA_InitTypeDef  DMA_InitStruct = {0};
 
   /* Peripheral clock enable */
   LL_RCC_UCPD1_EnableClock();
@@ -312,87 +329,95 @@ static void MX_UCPD1_Init(void)
   /* Enable UCPD regulator */
   if(ResMgr_Request(RESMGR_RESOURCE_RIF_PWR, RESMGR_PWR_RESOURCE(0)) == RESMGR_STATUS_ACCESS_OK)
   {
-    loc_printf("Enable UCPD regulator directly\r\n");
-    PWR->CR1 |= PWR_CR1_UCPDVMEN;                            /* UCPD voltage monitor enable */
-    while ((PWR->CR1 & PWR_CR1_UCPDRDY) != PWR_CR1_UCPDRDY); /* Wait for UCPD ready */
-    PWR->CR1 |= PWR_CR1_UCPDSV;                              /* Connect UCPD to supply */
-    PWR->CR1 &= ~PWR_CR1_UCPDVMEN;                           /* UCPD voltage monitor disable */
+    loc_printf("[LOG] : MX_UCPD1_Init -> Enable UCPD regulator directly\r\n");
+    HAL_PWREx_EnableSupply(PWR_PVM_UCPD);
   }
   else
   {
-    loc_printf("Enable UCPD regulator with SCMI\r\n");
+    int ret = 0;
+    loc_printf("[LOG] : MX_UCPD1_Init -> Enable UCPD regulator via SCMI\r\n");
     ret = scmi_voltage_domain_enable(&scmi_channel, VOLTD_SCMI_UCPD);
     if (ret)
-      loc_printf("Failed to enable VOLTD_SCMI_UCPD (error code %d)\r\n", ret);
+    {
+      loc_printf("[ERROR] : MX_UCPD1_Init -> Failed to enable VOLTD_SCMI_UCPD (error code %d)\r\n", ret);
+      Error_Handler();
+    }
+    else
+    {
+      loc_printf("[LOG] : MX_UCPD1_Init -> Successfully enabled VOLTD_SCMI_UCPD\r\n");
+    }
   }
 
-  if(ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(35)) == RESMGR_STATUS_ACCESS_OK) {
-	  /* Set clock source for UCPD */
-	  PeriphClkInit.XBAR_Channel = RCC_PERIPHCLK_USBTC;
-	  PeriphClkInit.XBAR_ClkSrc = RCC_XBAR_CLKSRC_HSI;
-	  PeriphClkInit.Div = 4; /* 64MHz / 4 = 16MHz */
-	  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-	  {
-		while (1);
-	  }
+  if(ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(35)) == RESMGR_STATUS_ACCESS_OK)
+  {
+    RCC_PeriphCLKInitTypeDef   PeriphClkInit  = {0};
+
+    /* Set clock source for UCPD */
+    PeriphClkInit.XBAR_Channel = RCC_PERIPHCLK_USBTC;
+    PeriphClkInit.XBAR_ClkSrc  = RCC_XBAR_CLKSRC_HSI;
+    PeriphClkInit.Div          = 4; /* 64MHz / 4 = 16MHz */
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+    {
+      loc_printf("[ERROR] : MX_UCPD1_Init -> HAL_RCCEx_PeriphCLKConfig Failed\r\n");
+      Error_Handler();
+    }
   }
 
   /* UCPD1 DMA Init */
 
   /* HPDMA3_REQUEST_UCPD1_RX Init */
-  DMA_InitStruct.SrcAddress = 0x00000000U;
-  DMA_InitStruct.DestAddress = 0x00000000U;
-  DMA_InitStruct.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
-  DMA_InitStruct.BlkHWRequest = LL_DMA_HWREQUEST_SINGLEBURST;
-  DMA_InitStruct.DataAlignment = LL_DMA_DATA_ALIGN_ZEROPADD;
-  DMA_InitStruct.SrcBurstLength = 1;
-  DMA_InitStruct.DestBurstLength = 1;
-  DMA_InitStruct.SrcDataWidth = LL_DMA_SRC_DATAWIDTH_BYTE;
-  DMA_InitStruct.DestDataWidth = LL_DMA_DEST_DATAWIDTH_BYTE;
-  DMA_InitStruct.SrcIncMode = LL_DMA_SRC_FIXED;
-  DMA_InitStruct.DestIncMode = LL_DMA_DEST_INCREMENT;
-  DMA_InitStruct.Priority = LL_DMA_LOW_PRIORITY_LOW_WEIGHT;
-  DMA_InitStruct.BlkDataLength = 0x00000000U;
-  DMA_InitStruct.TriggerMode = LL_DMA_TRIGM_BLK_TRANSFER;
-  DMA_InitStruct.TriggerPolarity = LL_DMA_TRIG_POLARITY_MASKED;
-  DMA_InitStruct.TriggerSelection = 0x00000000U;
-  DMA_InitStruct.Request = LL_HPDMA_REQUEST_UCPD_RX;
-  DMA_InitStruct.TransferEventMode = LL_DMA_TCEM_BLK_TRANSFER;
-  DMA_InitStruct.SrcAllocatedPort = LL_DMA_SRC_ALLOCATED_PORT0;
-  DMA_InitStruct.DestAllocatedPort = LL_DMA_DEST_ALLOCATED_PORT0;
-  DMA_InitStruct.LinkAllocatedPort = LL_DMA_LINK_ALLOCATED_PORT1;
-  DMA_InitStruct.LinkStepMode = LL_DMA_LSM_FULL_EXECUTION;
-  DMA_InitStruct.LinkedListBaseAddr = 0x00000000U;
-  DMA_InitStruct.LinkedListAddrOffset = 0x00000000U;
+  DMA_InitStruct.SrcAddress            = 0x00000000U;
+  DMA_InitStruct.DestAddress           = 0x00000000U;
+  DMA_InitStruct.Direction             = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+  DMA_InitStruct.BlkHWRequest          = LL_DMA_HWREQUEST_SINGLEBURST;
+  DMA_InitStruct.DataAlignment         = LL_DMA_DATA_ALIGN_ZEROPADD;
+  DMA_InitStruct.SrcBurstLength        = 1;
+  DMA_InitStruct.DestBurstLength       = 1;
+  DMA_InitStruct.SrcDataWidth          = LL_DMA_SRC_DATAWIDTH_BYTE;
+  DMA_InitStruct.DestDataWidth         = LL_DMA_DEST_DATAWIDTH_BYTE;
+  DMA_InitStruct.SrcIncMode            = LL_DMA_SRC_FIXED;
+  DMA_InitStruct.DestIncMode           = LL_DMA_DEST_INCREMENT;
+  DMA_InitStruct.Priority              = LL_DMA_LOW_PRIORITY_LOW_WEIGHT;
+  DMA_InitStruct.BlkDataLength         = 0x00000000U;
+  DMA_InitStruct.TriggerMode           = LL_DMA_TRIGM_BLK_TRANSFER;
+  DMA_InitStruct.TriggerPolarity       = LL_DMA_TRIG_POLARITY_MASKED;
+  DMA_InitStruct.TriggerSelection      = 0x00000000U;
+  DMA_InitStruct.Request               = LL_HPDMA_REQUEST_UCPD_RX;
+  DMA_InitStruct.TransferEventMode     = LL_DMA_TCEM_BLK_TRANSFER;
+  DMA_InitStruct.SrcAllocatedPort      = LL_DMA_SRC_ALLOCATED_PORT0;
+  DMA_InitStruct.DestAllocatedPort     = LL_DMA_DEST_ALLOCATED_PORT0;
+  DMA_InitStruct.LinkAllocatedPort     = LL_DMA_LINK_ALLOCATED_PORT1;
+  DMA_InitStruct.LinkStepMode          = LL_DMA_LSM_FULL_EXECUTION;
+  DMA_InitStruct.LinkedListBaseAddr    = 0x00000000U;
+  DMA_InitStruct.LinkedListAddrOffset  = 0x00000000U;
   LL_DMA_Init(HPDMA3, LL_DMA_CHANNEL_3, &DMA_InitStruct);
 
   /* HPDMA3_REQUEST_UCPD1_TX Init */
-  DMA_InitStruct.SrcAddress = 0x00000000U;
-  DMA_InitStruct.DestAddress = 0x00000000U;
-  DMA_InitStruct.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
-  DMA_InitStruct.BlkHWRequest = LL_DMA_HWREQUEST_SINGLEBURST;
-  DMA_InitStruct.DataAlignment = LL_DMA_DATA_ALIGN_ZEROPADD;
-  DMA_InitStruct.SrcBurstLength = 1;
-  DMA_InitStruct.DestBurstLength = 1;
-  DMA_InitStruct.SrcDataWidth = LL_DMA_SRC_DATAWIDTH_BYTE;
-  DMA_InitStruct.DestDataWidth = LL_DMA_DEST_DATAWIDTH_BYTE;
-  DMA_InitStruct.SrcIncMode = LL_DMA_SRC_INCREMENT;
-  DMA_InitStruct.DestIncMode = LL_DMA_DEST_FIXED;
-  DMA_InitStruct.Priority = LL_DMA_LOW_PRIORITY_LOW_WEIGHT;
-  DMA_InitStruct.BlkDataLength = 0x00000000U;
-  DMA_InitStruct.TriggerMode = LL_DMA_TRIGM_BLK_TRANSFER;
-  DMA_InitStruct.TriggerPolarity = LL_DMA_TRIG_POLARITY_MASKED;
-  DMA_InitStruct.TriggerSelection = 0x00000000U;
-  DMA_InitStruct.Request = LL_HPDMA_REQUEST_UCPD_TX;
-  DMA_InitStruct.TransferEventMode = LL_DMA_TCEM_BLK_TRANSFER;
-  DMA_InitStruct.SrcAllocatedPort = LL_DMA_SRC_ALLOCATED_PORT0;
-  DMA_InitStruct.DestAllocatedPort = LL_DMA_DEST_ALLOCATED_PORT0;
-  DMA_InitStruct.LinkAllocatedPort = LL_DMA_LINK_ALLOCATED_PORT1;
-  DMA_InitStruct.LinkStepMode = LL_DMA_LSM_FULL_EXECUTION;
-  DMA_InitStruct.LinkedListBaseAddr = 0x00000000U;
-  DMA_InitStruct.LinkedListAddrOffset = 0x00000000U;
+  DMA_InitStruct.SrcAddress            = 0x00000000U;
+  DMA_InitStruct.DestAddress           = 0x00000000U;
+  DMA_InitStruct.Direction             = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
+  DMA_InitStruct.BlkHWRequest          = LL_DMA_HWREQUEST_SINGLEBURST;
+  DMA_InitStruct.DataAlignment         = LL_DMA_DATA_ALIGN_ZEROPADD;
+  DMA_InitStruct.SrcBurstLength        = 1;
+  DMA_InitStruct.DestBurstLength       = 1;
+  DMA_InitStruct.SrcDataWidth          = LL_DMA_SRC_DATAWIDTH_BYTE;
+  DMA_InitStruct.DestDataWidth         = LL_DMA_DEST_DATAWIDTH_BYTE;
+  DMA_InitStruct.SrcIncMode            = LL_DMA_SRC_INCREMENT;
+  DMA_InitStruct.DestIncMode           = LL_DMA_DEST_FIXED;
+  DMA_InitStruct.Priority              = LL_DMA_LOW_PRIORITY_LOW_WEIGHT;
+  DMA_InitStruct.BlkDataLength         = 0x00000000U;
+  DMA_InitStruct.TriggerMode           = LL_DMA_TRIGM_BLK_TRANSFER;
+  DMA_InitStruct.TriggerPolarity       = LL_DMA_TRIG_POLARITY_MASKED;
+  DMA_InitStruct.TriggerSelection      = 0x00000000U;
+  DMA_InitStruct.Request               = LL_HPDMA_REQUEST_UCPD_TX;
+  DMA_InitStruct.TransferEventMode     = LL_DMA_TCEM_BLK_TRANSFER;
+  DMA_InitStruct.SrcAllocatedPort      = LL_DMA_SRC_ALLOCATED_PORT0;
+  DMA_InitStruct.DestAllocatedPort     = LL_DMA_DEST_ALLOCATED_PORT0;
+  DMA_InitStruct.LinkAllocatedPort     = LL_DMA_LINK_ALLOCATED_PORT1;
+  DMA_InitStruct.LinkStepMode          = LL_DMA_LSM_FULL_EXECUTION;
+  DMA_InitStruct.LinkedListBaseAddr    = 0x00000000U;
+  DMA_InitStruct.LinkedListAddrOffset  = 0x00000000U;
   LL_DMA_Init(HPDMA3, LL_DMA_CHANNEL_2, &DMA_InitStruct);
-
 }
 
 
@@ -414,8 +439,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 static void MX_IPCC_Init(void)
 {
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_Init(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_Init(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
@@ -429,12 +454,120 @@ void MX_IPCC_DeInit(void)
   /* IPCC interrupt DeInit */
   HAL_NVIC_DisableIRQ(IPCC1_RX_IRQn);
 
-  hipcc.Instance = IPCC1;
-  if (HAL_IPCC_DeInit(&hipcc) != HAL_OK)
+  hipcc1.Instance = IPCC1;
+  if (HAL_IPCC_DeInit(&hipcc1) != HAL_OK)
   {
      Error_Handler();
   }
 }
+
+#ifdef ICACHE_DCACHE_ENABLE
+/**
+  * @brief Instruction Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ICACHE_Init(void)
+{
+
+  if(HAL_ICACHE_DeInit() != HAL_OK)
+  {
+    Error_Handler();
+  }
+  ICACHE_RegionConfigTypeDef pRegionConfig = {0};
+  pRegionConfig.TrafficRoute    = ICACHE_MASTER2_PORT;
+  pRegionConfig.OutputBurstType = ICACHE_OUTPUT_BURST_INCR;
+  pRegionConfig.Size            = ICACHE_REGIONSIZE_2MB;
+  pRegionConfig.BaseAddress     = 0x00000000;
+  pRegionConfig.RemapAddress    = 0x80000000;
+
+  if (HAL_ICACHE_EnableRemapRegion(ICACHE_REGION_0, &pRegionConfig) != HAL_OK)
+  {
+  	 Error_Handler();
+  }
+
+  if (HAL_ICACHE_Enable() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+}
+
+/**
+  * @brief Data Cache Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DCACHE_Init(void)
+{
+
+  hdcache.Instance = DCACHE;
+  hdcache.Init.ReadBurstType = DCACHE_READ_BURST_WRAP;
+
+  if (HAL_DCACHE_Enable(&hdcache) != HAL_OK)
+  {
+     Error_Handler();
+  }
+
+}
+
+/**
+  * @brief  Configure the MPU attributes
+  * @param  None
+  * @retval None
+  */
+static void MPU_Config(void)
+{
+
+   MPU_Region_InitTypeDef MPU_InitStruct;
+   MPU_Attributes_InitTypeDef MPU_Attributes_InitStruct ;
+
+   HAL_MPU_Disable();
+
+   /* write back, read and write allocate */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_WRITE_BACK | MPU_NON_TRANSIENT | MPU_RW_ALLOCATE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER0;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   /* ICACHE */
+   MPU_InitStruct.Enable           = MPU_REGION_ENABLE;
+   MPU_InitStruct.Number           = MPU_REGION_NUMBER0;
+   MPU_InitStruct.AttributesIndex  = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.BaseAddress      = 0x00000000;
+   MPU_InitStruct.LimitAddress     = 0x00010000;
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RO;
+   MPU_InitStruct.DisableExec      = MPU_INSTRUCTION_ACCESS_ENABLE;
+   MPU_InitStruct.IsShareable      = MPU_ACCESS_NOT_SHAREABLE;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* DCACHE */
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x80A00000;
+   MPU_InitStruct.LimitAddress = 0x80E00000;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   /* Data section(IPC_SHMEM_1 & VIRTIO_SHMEM)- NON CACHEABLE */
+   MPU_Attributes_InitStruct.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
+   MPU_Attributes_InitStruct.Number = MPU_ATTRIBUTES_NUMBER1;
+   HAL_MPU_ConfigMemoryAttributes(&MPU_Attributes_InitStruct);
+
+   MPU_InitStruct.AccessPermission = MPU_REGION_ALL_RW;
+   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+   MPU_InitStruct.AttributesIndex = MPU_ATTRIBUTES_NUMBER1;
+   MPU_InitStruct.DisableExec= MPU_INSTRUCTION_ACCESS_DISABLE;
+   MPU_InitStruct.IsShareable = MPU_ACCESS_INNER_SHAREABLE;
+   MPU_InitStruct.BaseAddress =  0x81200000;
+   MPU_InitStruct.LimitAddress = 0x812FFFFF;
+   MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+   HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+#endif
 
 /**
   * @brief  This function is executed in case of error occurrence.

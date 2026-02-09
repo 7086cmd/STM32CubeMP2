@@ -760,3 +760,4 @@ g_pfnVectors:
     def_irq_handler EXTI1_15_IRQHandler
     def_irq_handler IS2M_IRQHandler
     def_irq_handler DDRPERFM_IRQHandler
+    def_irq_handler RESERVED_9_IRQHandler

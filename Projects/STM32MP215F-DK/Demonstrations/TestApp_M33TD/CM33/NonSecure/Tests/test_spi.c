@@ -21,7 +21,6 @@
   * @brief Includes required for SPI test routines.
   */
 #include "test_spi.h"
-#include "app_freertos.h"
 
 #ifdef ENABLE_SPI_TEST  // Conditionally compile the SPI test code
 

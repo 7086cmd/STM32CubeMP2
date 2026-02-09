@@ -67,15 +67,8 @@ Connectivity, USART, Asynchronous mode, RS-232, baud rate, Interrupt, HyperTermi
     In order to select use of Virtual Com port feature of STLINK for connection between STM32MP257F-EV1 and PC
     If so, please ensure that USART communication between the target MPU and ST-LINK MPU is properly enabled 
     on HW board in order to support Virtual Com Port (Default HW SB configuration allows use of VCP)
-
-    Connect USART1 TX/RX to respectively RX and TX pins of PC UART (could be done through a USB to UART adapter) :
-    - Connect STM32 MPU board USART1 TX pin (Pin 2 of CN5 connector)
-      to PC COM port RX signal
-    - Connect STM32 MPU board USART1 RX pin (Pin 3 of CN5 connector)
-      to PC COM port TX signal
-    - Connect STM32 MPU board GND to PC COM port GND signal
     
-  - Launch serial communication SW on PC (as HyperTerminal or TeraTerm) with proper configuration 
+  - Launch VCP2 (UART5) serial communication on PC (as HyperTerminal or TeraTerm) with proper configuration 
     (115200 bauds, 8 bits data, 1 stop bit, no parity, no HW flow control). 
 
   - Launch the program. Enter characters on PC communication SW side.

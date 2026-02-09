@@ -2,7 +2,7 @@
 <?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1046744999.1956380480.499128076.374067324.142357950.1973418222.1860904877">
-			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1046744999.1956380480.499128076.374067324.142357950.1973418222.1860904877" moduleId="org.eclipse.cdt.core.settings" name="CM33TDCID_m33_ns_tfm_s_sign">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1046744999.1956380480.499128076.374067324.142357950.1973418222.1860904877" moduleId="org.eclipse.cdt.core.settings" name="TestApp_build_ns">
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="Use build configuration for latest TFM 2.1.0" errorParsers="org.eclipse.cdt.core.GASErrorParser;org.eclipse.cdt.core.GmakeErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.CWDLocator;org.eclipse.cdt.core.GCCErrorParser" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1046744999.1956380480.499128076.374067324.142357950.1973418222.1860904877" name="CM33TDCID_m33_ns_tfm_s_sign" parent="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug" postannouncebuildStep="" postbuildStep="python.exe ${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/image_signing/scripts/assemble.py} --layout ${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/image_signing/layout_files/signing_layout_s_ns.o} --secure ${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/bin/tfm_s.bin} --non_secure ${BuildArtifactFileBaseName}.bin --output ${BuildArtifactFileBaseName}_tfm_s_ns.bin; python.exe ${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/image_signing/scripts/wrapper/wrapper.py} --version 2.1.0 --layout ${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/image_signing/layout_files/signing_layout_s_ns.o} --key ${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/image_signing/keys/image_s_signing_private_key.pem} --public-key-format full --align 1 --pad --pad-header -H 0x800 -s 1 -L 128    --measured-boot-record  ${BuildArtifactFileBaseName}_tfm_s_ns.bin ${BuildArtifactFileBaseName}_tfm_s_ns_signed.bin; &quot;${workspace_loc:/TestApp_M33TD_CM33_NonSecure/copyFlashBinaries.sh}&quot;  ${BuildArtifactFileBaseName}  ../../../../  ../../../../../../../../">
+				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="Use build configuration for TestApp Demonstration" errorParsers="org.eclipse.cdt.core.GASErrorParser;org.eclipse.cdt.core.GmakeErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.CWDLocator;org.eclipse.cdt.core.GCCErrorParser" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1046744999.1956380480.499128076.374067324.142357950.1973418222.1860904877" name="TestApp_build_ns" parent="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug" postannouncebuildStep="" postbuildStep="cmake -G &quot;Unix Makefiles&quot; -S ../../../../../../../../Utilities/M33TD_NSAppCore/postbuild -B M33TD_NSAppCore_postbuild -DPROJECT_NAME=${BuildArtifactFileBaseName} -DTFM_BUILD_DIR=&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default}&quot; -DBASE_DIR=../../../../ &amp;&amp; cmake --build M33TD_NSAppCore_postbuild --target M33TD_NSAppCore_postbuild" prebuildStep="cmake -S ../../../../../../../../Middlewares/Third_Party/OpenAMP/libmetal/ -B libmetal  -G&quot;Unix Makefiles&quot; -DCMAKE_TOOLCHAIN_FILE=cmake/platforms/stm32mp-freertos-gcc.cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5">
 					<folderInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1046744999.1956380480.499128076.374067324.142357950.1973418222.1860904877." name="/" resourcePath="">
 						<toolChain id="com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.exe.debug.1764144811" name="MCU ARM GCC" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.exe.debug">
 							<option id="com.st.stm32cube.ide.mcu.option.internal.toolchain.type.1096320081" name="Internal Toolchain Type" superClass="com.st.stm32cube.ide.mcu.option.internal.toolchain.type" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.toolchain.base.gnu-tools-for-stm32" valueType="string"/>
@@ -42,28 +42,54 @@
 							</tool>
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.590872534" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler">
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.1518715718" name="Debug level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.debuglevel.value.g3" valueType="enumerated"/>
-								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.1466938013" name="Optimization level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.value.o0" valueType="enumerated"/>
+								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.1466938013" name="Optimization level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.optimization.level.value.os" valueType="enumerated"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.definedsymbols.1088516615" name="Define symbols (-D)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.definedsymbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="STM32MP215Fxx"/>
 									<listOptionValue builtIn="false" value="ENABLE_AUTO_TEST=1"/>
+									<listOptionValue builtIn="false" value="DISPLAY_PANEL_ENABLED"/>
+									<listOptionValue builtIn="false" value="SPLASH_ANIMATION_ENABLED"/>
+									<listOptionValue builtIn="false" value="USE_LCD_RGB_RK043FN48H"/>
+									<listOptionValue builtIn="false" value="LCD_ORIENTATION_PORTRAIT"/>
+									<listOptionValue builtIn="false" value="REALTIME_DEBUG_LOG_ENABLED=1"/>
 									<listOptionValue builtIn="false" value="STM32MP2"/>
 									<listOptionValue builtIn="false" value="USE_HAL_TIM_REGISTER_CALLBACKS  = 1"/>
 									<listOptionValue builtIn="false" value="STM32MP21xxxx"/>
+									<listOptionValue builtIn="false" value="METAL_INTERNAL"/>
+									<listOptionValue builtIn="false" value="VIRTIO_DEVICE_ONLY"/>
 									<listOptionValue builtIn="false" value="CORE_CM33"/>
 									<listOptionValue builtIn="false" value="USE_STM32MP215FXX_DK"/>
+									<listOptionValue builtIn="false" value="NO_ATOMIC_64_SUPPORT"/>
+									<listOptionValue builtIn="false" value="METAL_MAX_DEVICE_REGIONS=2"/>
+									<listOptionValue builtIn="false" value="LINUX_RPROC_MASTER"/>
+									<listOptionValue builtIn="false" value="HAL_LTDC_MODULE_ENABLED"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths.1021705870" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="../../../../CM33/NonSecure/Core/Inc"/>
+									<listOptionValue builtIn="false" value="./libmetal/lib/include"/>
+									<listOptionValue builtIn="false" value="../../../../CM33/NonSecure/OpenAMP/Inc"/>
 									<listOptionValue builtIn="false" value="../../../../CM33/NonSecure/Tests"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/interface/include}&quot;"/>
 									<listOptionValue builtIn="false" value="../../../../CM33/NonSecure/FREERTOS/App"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/ResourcesManager"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/common/stm32mp2xx/secure/services/include}&quot;"/>
+									<listOptionValue builtIn="false" value="../../../../CM33/NonSecure/Core/Inc"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/App/Inc"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/Common/Panel"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/Common"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/Common/FaultMgr"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/Includes"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/Assets"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Utilities/M33TD_NSAppCore/Assets/anim_13fps_480x272"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/interface/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/common/devicetree/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/common/stm32mp2xx/cmsis_driver/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/common/stm32mp2xx/native_driver/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/common/stm32mp2xx/secure/services/include/uapi}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/TestApp_M33TD_CM33_trusted-firmware-m/trusted-firmware-m/config_default/api_ns/common/stm32mp2xx/secure/services/include}&quot;"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Drivers/CMSIS/RTOS2/Include"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Middlewares/Third_Party/FreeRTOS/Source/include"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Middlewares/Third_Party/OpenAMP/open-amp/lib/include"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Middlewares/Third_Party/OpenAMP/open-amp/lib"/>
+									<listOptionValue builtIn="false" value="../../../../../../../../Middlewares/Third_Party/OpenAMP/virtual_driver"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM33_NTZ/non_secure"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Drivers/STM32MP2xx_HAL_Driver/Inc"/>
 									<listOptionValue builtIn="false" value="../../../../../../../../Drivers/BSP/STM32MP215F-DK"/>
@@ -124,5 +150,9 @@
 			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="CM33TDCID_m33_ns_tfm_s_sign">
+			<resource resourceType="PROJECT" workspacePath="/TestApp_M33TD_CM33_NonSecure"/>
+		</configuration>
+	</storageModule>
 </cproject>

@@ -25,6 +25,14 @@ extern "C" {
 
 /* Exported macros -----------------------------------------------------------*/
 
+/*------------------- TestApp Task -------------------*/
+/**
+  * @brief  Stack size, priority, and enable switch for TestApp Task.
+  */
+#define TESTAPP_TASK_STACK_SIZE       2048 /**< Stack size for TestApp Task. */
+#define TESTAPP_TASK_PRIORITY         osPriorityBelowNormal /**< Priority for TestApp Task. */
+
+
 #ifndef DISABLE_TIMERS_TEST
 #define ENABLE_TIMERS_TEST /**< Enable Timers Test. */
 #endif

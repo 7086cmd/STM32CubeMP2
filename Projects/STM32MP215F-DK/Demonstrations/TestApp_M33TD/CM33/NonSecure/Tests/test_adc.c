@@ -18,7 +18,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_adc.h"
-#include "app_freertos.h"
 
 #ifdef ENABLE_ADC_TEST  // Conditionally compile the ADC test code
 

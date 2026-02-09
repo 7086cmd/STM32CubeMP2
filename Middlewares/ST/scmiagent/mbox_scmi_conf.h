@@ -42,19 +42,30 @@ typedef unsigned int phys_addr_t;     /* Physical address type */
 #define MBOX_SCMI_IPCC_TIMEOUT_CHAN_FREE_MS   1000
 #define MBOX_SCMI_IPCC_TIMEOUT_CALLBACK_MS    1000
 
+#if defined(CORE_CA35)
+#define MBOX_SCMI_IPCC_CHANNEL                IPCC_CHANNEL_15
+#else
 #define MBOX_SCMI_IPCC_CHANNEL                IPCC_CHANNEL_16
+#endif
 
 #if defined(STM32MP21xxxx)
   #define VOLTD_SCMI_ADC            3
+  #define CK_SCMI_FLEXGEN_47        47
   /* VOLTD_SCMI_UCPD is not needed yet for MP21 so not defined */
 #elif defined(STM32MP23xxxx)
   #define VOLTD_SCMI_ADC            7
   #define VOLTD_SCMI_UCPD           5
+  #define CK_SCMI_FLEXGEN_47        47
 #elif defined(STM32MP25xxxx)
   #define VOLTD_SCMI_ADC            7
   #define VOLTD_SCMI_UCPD           5
+  #if defined(USE_STM32MP257CXX_VALID2)
+    #define CK_SCMI_FLEXGEN_46      46
+  #else
+    #define CK_SCMI_FLEXGEN_47      47
+  #endif
 #else
-  #error "SCMI Domain-Id not defined"
+  #error "SCMI Domain-Id / Clock-Id not defined"
 #endif
 
 

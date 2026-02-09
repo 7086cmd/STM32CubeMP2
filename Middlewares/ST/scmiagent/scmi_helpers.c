@@ -46,6 +46,7 @@ static int write_msg_to_smt(struct scmi_message_data *msg)
 	/* Load message in shared memory */
 	hdr->channel_status &= ~SMT_CHANNEL_STATUS_FREE;
 	hdr->length = msg->message_size + sizeof(hdr->msg_header);
+	hdr->flags = 1; /* tell server to raise an IPCC interrupt */
 	hdr->msg_header = SMT_MSG_HEADER_TOKEN(0) |
 			  SMT_MSG_HEADER_MESSAGE_TYPE(0) |
 			  SMT_MSG_HEADER_PROTOCOL_ID(msg->protocol_id) |

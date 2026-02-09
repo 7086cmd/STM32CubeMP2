@@ -6,7 +6,11 @@ For compilation please do following:
 
 
 To build:
-- cmake -G"Unix Makefiles" -B build
+- cmake -G"Unix Makefiles" --fresh -B build              (To disable TRACE Feature)
+- cmake -G"Unix Makefiles" --fresh -B build -DTRACE=OFF  (To disable TRACE Feature)
+  OR
+- cmake -G"Unix Makefiles" --fresh -B build -DTRACE=ON   (To ENABLE TRACE Feature)
+
 - make -C build all
 
 Generate Signed Binary:

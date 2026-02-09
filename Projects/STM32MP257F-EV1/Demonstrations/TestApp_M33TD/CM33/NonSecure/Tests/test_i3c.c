@@ -17,7 +17,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_i3c.h"
-#include "app_freertos.h"
 
 #ifdef ENABLE_I3C_TEST
 

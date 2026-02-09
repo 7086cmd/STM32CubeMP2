@@ -18,7 +18,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "test_common.h"
-#include "app_freertos.h"
 
 /**
   * @brief  Run a test with init, run, and deinit function pointers.

@@ -62,7 +62,7 @@
 /** @defgroup COPRO_SYNC_Private_Variables
 * @{
 */
-extern IPCC_HandleTypeDef hipcc;
+extern IPCC_HandleTypeDef hipcc1;
 
 /**
 * @}
@@ -92,7 +92,7 @@ CoproSync_Status_t CoproSync_Init(void)
 {
   CoproSync_Status_t ret = COPROSYNC_OK;
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, COPRO_SYNC_SHUTDOWN_CHANNEL, IPCC_CHANNEL_DIR_RX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, COPRO_SYNC_SHUTDOWN_CHANNEL, IPCC_CHANNEL_DIR_RX,
           CoproSync_ShutdownCb) != HAL_OK)
     ret = COPROSYNC_ERROR;
 
@@ -108,7 +108,7 @@ CoproSync_Status_t CoproSync_DeInit(void)
 {
   CoproSync_Status_t ret = COPROSYNC_OK;
 
-  if (HAL_IPCC_DeActivateNotification(&hipcc, COPRO_SYNC_SHUTDOWN_CHANNEL, IPCC_CHANNEL_DIR_RX) != HAL_OK)
+  if (HAL_IPCC_DeActivateNotification(&hipcc1, COPRO_SYNC_SHUTDOWN_CHANNEL, IPCC_CHANNEL_DIR_RX) != HAL_OK)
     ret = COPROSYNC_ERROR;
 
   return ret;

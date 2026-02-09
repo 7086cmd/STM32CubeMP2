@@ -126,6 +126,7 @@ set(USBPDLIB_SRC_FILES ${USBPDLIB_SRC_FILES}
 						)
 set(SCMIAGENT_SRC_FILES ${SCMIAGENT_SRC_FILES}
 						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/mbox_scmi.c
+						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/scmi_clock.c
 						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/scmi_helpers.c 
 						${BASE_DIR}/../../../../Middlewares/ST/scmiagent/scmi_regu.c 
 						)
@@ -141,7 +142,7 @@ set(CMSIS_SRC_FILES ${CMSIS_SRC_FILES}
 # Set application source files
 set(APPLICATION_SRC ${APPLICATION_SRC} ${HAL_SRC_FILES} ${OPENAMP_SRC_FILES} ${OPENAMP_SRC_GEN_FILES} ${FREERTOS_SRC_FILES} ${BSP_SRC_FILES} ${USBPDLIB_SRC_FILES} ${SCMIAGENT_SRC_FILES} ${UTILS_SRC_FILES} ${CMSIS_SRC_FILES}
 						${BASE_DIR}/CM33/NonSecure/FREERTOS/App/app_freertos.c
-						${BASE_DIR}/CM33/NonSecure/Core/Src/startup_stm32mp257cxx_m33.s
+						${BASE_DIR}/../../../../Drivers/CMSIS/Device/ST/STM32MP2xx/Source/Templates/gcc/startup_stm32mp257cxx_m33.s
 						${BASE_DIR}/CM33/NonSecure/Core/Src/led_thread.c 
 						${BASE_DIR}/CM33/NonSecure/Core/Src/main.c
 						${BASE_DIR}/CM33/NonSecure/Core/Src/syscalls.c

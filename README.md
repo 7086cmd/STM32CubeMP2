@@ -11,7 +11,7 @@
    * A consistent set of middleware libraries such as RTOS, USB, FatFS, graphics, touch sensing library...
    * A full set of software projects (basic examples, applications, and demonstrations) for each board provided for this STM32 series.
 
-The **STM32CubeMP25 MCU Package** projects are directly running on the STM32MP25 series boards. You can find in each Projects/*Board name* directories a set of software projects (Applications/Demonstration/Examples).
+The **STM32CubeMP2 MCU Package** projects are directly running on the STM32MP2 series boards. You can find in each Projects/*Board name* directories a set of software projects (Applications/Demonstration/Examples).
 
 ## Release note
 
@@ -19,12 +19,11 @@ Details about the content of this release are available in the release note [her
 
 ## Boards available
 
-  * STM32MP25
-    * [STM32MP257F-EV1]
-    * [STM32MP257F-DK]
+  * STM32MP2
+    * [STM32MP257F-EV1](https://www.st.com/en/evaluation-tools/stm32mp257f-ev1.html)
+    * [STM32MP257F-DK](https://www.st.com/en/evaluation-tools/stm32mp257f-dk.html)
+    * [STM32MP215F-DK](https://www.st.com/en/evaluation-tools/stm32mp215f-dk.html)
 
 ## Troubleshooting
 
-**Caution** : The issues and the pull-requests are **strictly limited** to submit problems or suggestions related to the software delivered in this repository.
-
-**For any other question** related to the product, the hardware performance or characteristics, the tools, the environment, you can submit it to the **ST Community** on the STM32 MCUs related [page](https://community.st.com/s/group/0F90X000000AXsASAW/stm32-mcus).
+Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) guide.

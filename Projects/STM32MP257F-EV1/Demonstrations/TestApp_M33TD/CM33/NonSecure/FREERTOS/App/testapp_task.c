@@ -17,17 +17,18 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+/**
+  * @brief Includes required for the Test Application Task functionality.
+  */
 #include "testapp_task.h"
-#include "cmsis_os2.h"
-#include "app_tasks_config.h"
 #include <stdio.h>
-#include "userapp_task.h"
-#include "app_freertos.h"
 #include "test_common.h"
-#include "stm32mp2xx_hal.h"
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
+/**
+  * @brief Private includes for additional headers required by this file.
+  */
 /* USER CODE BEGIN Includes */
 #ifdef ENABLE_TIMERS_TEST
 #include "test_timer.h"
@@ -56,11 +57,17 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+/**
+  * @brief Private typedefs used in this file.
+  */
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
+/**
+  * @brief Private defines used in this file.
+  */
 #define EXTI_EVENT_FLAG    (1U << 0)
 #define TESTAPP_TEST_COUNT   (sizeof(testList)/sizeof(testList[0]))
 
@@ -69,26 +76,28 @@
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
+/**
+  * @brief Private macros used in this file.
+  */
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 /**
-  * @brief  RTOS event for EXTI (button press).
+    * @brief  RTOS event for button press.
   */
 static osEventFlagsId_t extiEventFlag = NULL;
-EXTI_HandleTypeDef hexti;
 
 /* USER CODE BEGIN PV */
-static osThreadId_t TestAppTaskHandle;
-static volatile size_t currentTest = 0;
+static osThreadId_t TestAppTaskHandle; /**< Handle for the Test Application Task. */
+static volatile size_t currentTest = 0; /**< Index of the current test being executed. */
 
 static const osThreadAttr_t TestAppTaskAttr = {
     .name = "TestAppTask",
     .priority = (osPriority_t)TESTAPP_TASK_PRIORITY,
     .stack_size = TESTAPP_TASK_STACK_SIZE
-};
+}; /**< Attributes for the Test Application Task. */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,10 +109,12 @@ static const osThreadAttr_t TestAppTaskAttr = {
 static void TestAppTask(void *argument);
 
 /**
-  * @brief  Notify EXTI event.
-  * @retval None
-  */
-static void TestApp_EXTI_Notify(void);
+    * @brief  Button short-press handler (driven by BtnMonitorTask).
+    * @param  event: Button event type.
+    * @param  context: User context (unused).
+    * @retval None
+    */
+static void TestApp_BtnHandler(ButtonEventType_t event, void *context);
 
 /**
   * @brief  Wait for user action (button press).
@@ -144,10 +155,6 @@ static const TestAppTestEntry testList[] = {
 #endif
 };
 
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
 /* Exported functions --------------------------------------------------------*/
 /**
   * @brief  Initialize the Test Application Task and its resources.
@@ -155,50 +162,35 @@ static const TestAppTestEntry testList[] = {
   */
 void TestAppTask_Init(void)
 {
-
-    GPIO_InitTypeDef   GPIO_InitStruct;
-    EXTI_ConfigTypeDef EXTI_ConfigStructure;
-
-    // Enable GPIOG clock
-    if (RESMGR_STATUS_ACCESS_OK == ResMgr_Request(RESMGR_RESOURCE_RIF_RCC, RESMGR_RCC_RESOURCE(96)))
-    {
-        __HAL_RCC_GPIOG_CLK_ENABLE();
-    }
-    // Acquire GPIOG8 using Resource manager
-    if (RESMGR_STATUS_ACCESS_OK != ResMgr_Request(RESMGR_RESOURCE_RIF_GPIOG, RESMGR_GPIO_PIN(8)))
-    {
-        App_ErrorHandler();
-    }
-
-    // Configure PG.8 pin as input floating
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Pin = BUTTON_USER2_PIN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(BUTTON_USER2_GPIO_PORT, &GPIO_InitStruct);
-
-    // Set configuration except Interrupt and Event mask of Exti line 8
-    EXTI_ConfigStructure.Line = EXTI2_LINE_8;
-    EXTI_ConfigStructure.Trigger = EXTI_TRIGGER_RISING_FALLING;
-    EXTI_ConfigStructure.GPIOSel = EXTI_GPIOG;
-    EXTI_ConfigStructure.Mode = EXTI_MODE_INTERRUPT;
-    HAL_EXTI_SetConfigLine(&hexti, &EXTI_ConfigStructure);
-
-    // Register callback to treat Exti interrupts in user Exti2FallingCb function
-    HAL_EXTI_RegisterCallback(&hexti, HAL_EXTI_FALLING_CB_ID, TestApp_EXTI_Notify);
-
-    // Enable and set line 2 Interrupt to the lowest priority
-    HAL_NVIC_SetPriority(EXTI2_8_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + DEFAULT_IRQ_PRIO, 0);
-    HAL_NVIC_EnableIRQ(EXTI2_8_IRQn);
-
     extiEventFlag = osEventFlagsNew(NULL);
     if (extiEventFlag == NULL) {
-        APP_LOG_ERR("TestApp", "Failed to create EXTI event flag");
+        printf("\033[31m[NS] [ERR] [TestApp] Failed to create EXTI event flag\033[0m\r\n");
         return;
     }
+
+    /* Button press events are provided by the NSAppCore BtnMonitorTask.
+     * - SHORT_PRESS drives test sequencing (this task).
+     * - VERY_LONG_PRESS is reserved for reboot handling (OpenAMP/NSAppCore).
+     */
+    int btnRegStatus = BtnMonitorTask_RegisterListener(BUTTON_EVENT_SHORT_PRESS, TestApp_BtnHandler, NULL);
+    if (btnRegStatus == -2)
+    {
+        printf("\033[32m[NS] [INF] [TestApp] Button listener (SHORT_PRESS) already registered\033[0m\r\n");
+    }
+    else if (btnRegStatus < 0)
+    {
+        printf("\033[31m[NS] [ERR] [TestApp] Failed to register button listener (SHORT_PRESS), err=%d\033[0m\r\n", btnRegStatus);
+        osEventFlagsDelete(extiEventFlag);
+        extiEventFlag = NULL;
+        return;
+    }
+
     TestAppTaskHandle = osThreadNew(TestAppTask, NULL, &TestAppTaskAttr);
     if (TestAppTaskHandle == NULL) {
-        APP_LOG_ERR("TestApp", "Failed to create TestAppTask");
+        printf("\033[31m[NS] [ERR] [TestApp] Failed to create TestAppTask\033[0m\r\n");
+        (void)BtnMonitorTask_UnregisterListener(BUTTON_EVENT_SHORT_PRESS);
+        osEventFlagsDelete(extiEventFlag);
+        extiEventFlag = NULL;
     }
 }
 
@@ -212,14 +204,13 @@ void TestAppTask_DeInit(void)
         osThreadTerminate(TestAppTaskHandle);
         TestAppTaskHandle = NULL;
     }
+
+    (void)BtnMonitorTask_UnregisterListener(BUTTON_EVENT_SHORT_PRESS);
+
     if (extiEventFlag != NULL) {
         osEventFlagsDelete(extiEventFlag);
         extiEventFlag = NULL;
     }
-
-    HAL_GPIO_DeInit(BUTTON_USER2_GPIO_PORT, BUTTON_USER2_PIN);
-    ResMgr_Release(RESMGR_RESOURCE_RIF_GPIOG, RESMGR_GPIO_PIN(8));
-    HAL_NVIC_DisableIRQ(EXTI2_8_IRQn);
 }
 
 /* Private functions ---------------------------------------------------------*/
@@ -228,7 +219,7 @@ void TestAppTask_DeInit(void)
   * @param  argument: Not used.
   * @retval None
   */
-void TestAppTask(void *argument) {
+static void TestAppTask(void *argument) {
     (void)argument;
 
     for (size_t i = 0; i < sizeof(testList) / sizeof(testList[0]); ++i) {
@@ -278,8 +269,15 @@ void TestAppTask(void *argument) {
   * @brief  Notify EXTI event (called from EXTI interrupt handler).
   * @retval None
   */
-static void TestApp_EXTI_Notify(void)
+static void TestApp_BtnHandler(ButtonEventType_t event, void *context)
 {
+    (void)context;
+
+    if (event != BUTTON_EVENT_SHORT_PRESS)
+    {
+        return;
+    }
+
     if (extiEventFlag != NULL) {
         osEventFlagsSet(extiEventFlag, EXTI_EVENT_FLAG);
     }

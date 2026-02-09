@@ -21,7 +21,6 @@
   * @brief Includes required for TIMERS test routines.
   */
 #include "test_timer.h"
-#include "app_freertos.h"
 #include "stdlib.h"
 
 #ifdef ENABLE_TIMERS_TEST  // Conditionally compile the TIMERS test code
@@ -58,11 +57,11 @@ static volatile int sync_success = 1;
 
 /* Exported functions --------------------------------------------------------*/
 /**
-  * @brief  Timer period elapsed callback for synchronization check and LED toggle.
+  * @brief  Timer callback on period elapsed callback for synchronization check and LED toggle.
   * @param  htim: Pointer to TIM handle.
   * @retval None
   */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void Test_TIMER_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM8) {
         tim8_last = __HAL_TIM_GET_COUNTER(&htim8);

@@ -61,7 +61,7 @@
 
 /* USER CODE END PFP */
 
-extern IPCC_HandleTypeDef hipcc;
+extern IPCC_HandleTypeDef hipcc1;
 uint32_t vring0_id = 0; /* used for channel 1 */
 uint32_t vring1_id = 1; /* used for channel 2 */
 
@@ -101,21 +101,21 @@ int MAILBOX_Init(void)
 
   /* USER CODE END  PRE_MAILBOX_INIT */
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX,
                                     IPCC_channel1_callback) != HAL_OK)
   {
     OPENAMP_log_err("%s: ch_1 RX fail\n", __func__);
     return -1;
   }
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, IPCC_CHANNEL_2, IPCC_CHANNEL_DIR_RX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, IPCC_CHANNEL_2, IPCC_CHANNEL_DIR_RX,
                                     IPCC_channel2_callback) != HAL_OK)
   {
     OPENAMP_log_err("%s: ch_2 RX fail\n", __func__);
     return -1;
   }
 
-  if (HAL_IPCC_ActivateNotification(&hipcc, IPCC_CHANNEL_4, IPCC_CHANNEL_DIR_RX,
+  if (HAL_IPCC_ActivateNotification(&hipcc1, IPCC_CHANNEL_4, IPCC_CHANNEL_DIR_RX,
                                     CoproSync_DetachCb) != HAL_OK)
   {
     OPENAMP_log_err("%s: ch_4 RX fail\n", __func__);
@@ -139,12 +139,12 @@ void MAILBOX_DeInit(void)
 
   /* USER CODE END  PRE_MAILBOX_INIT */
 
-  if (HAL_IPCC_DeActivateNotification(&hipcc, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX) != HAL_OK)
+  if (HAL_IPCC_DeActivateNotification(&hipcc1, IPCC_CHANNEL_1, IPCC_CHANNEL_DIR_RX) != HAL_OK)
   {
     OPENAMP_log_err("%s: ch_1 RX fail\n", __func__);
   }
 
-  if (HAL_IPCC_DeActivateNotification(&hipcc, IPCC_CHANNEL_2, IPCC_CHANNEL_DIR_RX) != HAL_OK)
+  if (HAL_IPCC_DeActivateNotification(&hipcc1, IPCC_CHANNEL_2, IPCC_CHANNEL_DIR_RX) != HAL_OK)
   {
     OPENAMP_log_err("%s: ch_2 RX fail\n", __func__);
   }
@@ -220,14 +220,14 @@ int MAILBOX_Notify(void *priv, uint32_t id)
   }
 
   /* Check that the channel is free (otherwise wait until it is) */
-  if (HAL_IPCC_GetChannelStatus(&hipcc, channel, IPCC_CHANNEL_DIR_TX) == IPCC_CHANNEL_STATUS_OCCUPIED)
+  if (HAL_IPCC_GetChannelStatus(&hipcc1, channel, IPCC_CHANNEL_DIR_TX) == IPCC_CHANNEL_STATUS_OCCUPIED)
   {
     OPENAMP_log_dbg("Waiting for channel to be freed\r\n");
-    while (HAL_IPCC_GetChannelStatus(&hipcc, channel, IPCC_CHANNEL_DIR_TX) == IPCC_CHANNEL_STATUS_OCCUPIED);
+    while (HAL_IPCC_GetChannelStatus(&hipcc1, channel, IPCC_CHANNEL_DIR_TX) == IPCC_CHANNEL_STATUS_OCCUPIED);
   }
 
   /* Inform A35 (either new message, or buf free) */
-  HAL_IPCC_NotifyCPU(&hipcc, channel, IPCC_CHANNEL_DIR_TX);
+  HAL_IPCC_NotifyCPU(&hipcc1, channel, IPCC_CHANNEL_DIR_TX);
 
   /* USER CODE BEGIN POST_MAILBOX_NOTIFY */
 

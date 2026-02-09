@@ -31,6 +31,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>stm32mp2xx_DDR_m33_ns.ld</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/Drivers/CMSIS/Device/ST/STM32MP2xx/Source/Templates/gcc/linker/stm32mp2xx_DDR_m33_ns.ld</locationURI>
+		</link>
+		<link>
 			<name>Utilities/copro_sync.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/Utilities/CoproSync/copro_sync.c</locationURI>
@@ -53,7 +58,7 @@
 		<link>
 			<name>Application/Startup/startup_stm32mp235fxx_m33.s</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/CM33/NonSecure/Core/Src/startup_stm32mp235fxx_m33.s</locationURI>
+			<locationURI>PARENT-8-PROJECT_LOC/Drivers/CMSIS/Device/ST/STM32MP2xx/Source/Templates/gcc/startup_stm32mp235fxx_m33.s</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core</name>
@@ -84,6 +89,11 @@
 			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_cortex.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_cortex.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_dcache.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/Drivers/STM32MP2xx_HAL_Driver/Src/stm32mp2xx_hal_dcache.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32MP2xx_HAL_Driver/stm32mp2xx_hal_dma.c</name>
@@ -244,6 +254,11 @@
 			<name>Middlewares/scmiagent/mbox_scmi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-8-PROJECT_LOC/Middlewares/ST/scmiagent/mbox_scmi.c</locationURI>
+		</link>
+		<link>
+			<name>Middlewares/scmiagent/scmi_clock.c</name>
+			<type>1</type>
+			<locationURI>PARENT-8-PROJECT_LOC/Middlewares/ST/scmiagent/scmi_clock.c</locationURI>
 		</link>
 		<link>
 			<name>Middlewares/scmiagent/scmi_helpers.c</name>
