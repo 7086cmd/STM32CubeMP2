@@ -6694,11 +6694,11 @@ typedef struct
 
 /*********  Bit definition for CA35SSC_LPI_TSGEN_NTS_CR_WC1 register  *********/
 #define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Pos              (8U)
-#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Msk              (0x1UL << CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Pos) *!< 0x00000100 */
-#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ                  CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Msk           *!<  */
+#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Msk              (0x1UL << CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Pos) /*!< 0x00000100 */
+#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ                  CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSREQ_Msk           /*!<  */
 #define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Pos              (9U)
-#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Msk              (0x1UL << CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Pos) *!< 0x00000200 */
-#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK                  CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Msk           *!<  */
+#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Msk              (0x1UL << CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Pos) /*!< 0x00000200 */
+#define CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK                  CA35SSC_LPI_TSGEN_NTS_CR_WC1_TS_CSYSACK_Msk           /*!<  */
 
 /*********  Bit definition for CA35SSC_LPI_TSGEN_NTS_CR_WT1 register  *********/
 #define CA35SSC_LPI_TSGEN_NTS_CR_WT1_TS_CSYSREQ_Pos              (8U)
